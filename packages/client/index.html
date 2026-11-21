@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Factory Simulator</title>
+  </head>
+  <body>
+    <div id="game-root">
+      <div id="canvas-container"></div>
+
+      <div id="hud">
+        <div class="hud-top-left">
+          <div id="status" class="hud-pill">Server: connecting...</div>
+        </div>
+
+        <div class="hud-top-right">
+          <button
+            id="mouse-lock-toggle"
+            class="hud-button"
+            type="button"
+            aria-label="Toggle Mouse Look"
+          >
+            Mouse Look: OFF
+          </button>
+          <button id="fps-toggle" class="hud-button" type="button" aria-label="Toggle FPS">
+            FPS
+          </button>
+          <div id="fps-counter" class="hud-pill hidden">FPS: --</div>
+        </div>
+
+        <div id="controls-hint" class="hud-pill hud-bottom-right">
+          WASD move · Shift run · Drag mouse or [L] camera · F3 FPS
+        </div>
+
+        <div id="joystick-zone" class="joystick-zone hidden" aria-hidden="true">
+          <div id="joystick-base" class="joystick-base">
+            <div id="joystick-knob" class="joystick-knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="error-overlay" class="error-overlay hidden" role="alert">
+        <div class="error-card">
+          <h1>Graphics Not Supported</h1>
+          <p id="error-message"></p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
