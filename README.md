@@ -31,10 +31,20 @@ pnpm --filter @factory-simulator/client dev -- --host
 
 Copy `.env.example` to `.env` if you need to change the port.
 
-## Controls (Stage 1A)
+## 3D Asset Pipeline
+
+All 3D assets (characters, props, buildings, machines, and map pieces) are built reproducibly with headless Blender 4.2 LTS and exported as `.glb` into `content/` (see [docs/guides/asset-pipeline.md](docs/guides/asset-pipeline.md)).
+
+```bash
+pnpm setup:blender    # caches portable Blender 4.2 LTS in tools/.cache/blender/
+pnpm build:character  # exports content/characters/default/character.glb + 4-angle previews
+```
+
+## Controls & Visual Lab
 
 - Desktop: `WASD` or Arrow keys to move, `Shift` to run, drag mouse (left or right button) to rotate camera, press `L` or click `Mouse Look` for free mouse steering (`Esc` unlocks), `F3` to toggle FPS.
-- Touch / Phone: virtual joystick on the bottom-left (push to outer edge to run), drag screen to rotate camera, `FPS` button on top-right.
+- Touch / Phone: virtual joystick on the bottom-left (push to outer edge to run), drag screen to rotate camera, `FPS` button on top-right, `Settings` to toggle outlines off on weaker devices.
+- Visual comparison lab: open `/lab` (`http://localhost:5173/lab`) to inspect the 4-side character, toon materials, hard shadows, procedural sky, Abeto color palette, and paper-sticker HUD button samples.
 
 ## Structure
 

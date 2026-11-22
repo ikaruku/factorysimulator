@@ -12,7 +12,9 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "eslint . && prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "setup:blender": "node tools/asset-pipeline/ensure-blender.mjs",
+    "build:character": "node tools/character-builder/run-build.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

@@ -19,11 +19,14 @@ import { InputManager, type InputMode } from "./core/input-manager";
 import { WorldRenderer } from "./core/renderer";
 import { ScreenWakeLock } from "./core/wake-lock";
 import { isWebGl2Supported, showGraphicsError } from "./core/webgl-check";
-import { LowPolyCharacter } from "./entities/low-poly-character";
+import { CharacterAvatar } from "./entities/character-avatar";
+import { startLabPage } from "./lab/lab-page";
 import { checkServerConnection } from "./network/connection";
 import { FpsCounter } from "./ui/fps-counter";
+import { SettingsPanel } from "./ui/settings-panel";
 import { setStatus } from "./ui/status";
 import { VirtualJoystick } from "./ui/virtual-joystick";
+import { OutlineComposer } from "./visuals/outline-composer";
 import { createTestWorld } from "./world/test-world";
 
 function updateControlsHint(mode: InputMode, pointerLocked: boolean): void {
@@ -55,7 +58,7 @@ async function checkServerStatus(): Promise<void> {
   }
 }
 
-function startGame(): void {
+function startWorldGame(): void {
   if (!isWebGl2Supported()) {
     showGraphicsError(
       "Your browser or device does not support WebGL2, which is required to run Factory Simulator.",
@@ -66,15 +69,31 @@ function startGame(): void {
   const container = document.getElementById("canvas-container");
   if (!container) return;
 
-  const { scene, colliders } = createTestWorld();
-  const character = new LowPolyCharacter();
+  const { scene, colliders, sky } = createTestWorld();
+  const settingsPanel = new SettingsPanel({
+    onOutlinesChange: (enabled) => {
+      composer?.setOutlinesEnabled(enabled);
+    },
+    onCharacterLoadoutChange: (nextLoadout) => {
+      void character.setLoadout(nextLoadout);
+    },
+  });
+  const character = new CharacterAvatar(settingsPanel.getCharacterLoadout());
   scene.add(character.group);
 
   const aspect = (container.clientWidth || window.innerWidth) / Math.max(window.innerHeight, 1);
   const cameraController = new CameraController(aspect);
-  const worldRenderer = new WorldRenderer(container, (nextAspect) => {
+
+  let composer: OutlineComposer | null = null;
+  const worldRenderer = new WorldRenderer(container, (nextAspect, dims) => {
     cameraController.setAspect(nextAspect);
+    composer?.resize(dims.width, dims.height, dims.pixelRatio);
   });
+
+  composer = new OutlineComposer(worldRenderer.renderer, scene, cameraController.camera);
+  const initialDims = worldRenderer.getDimensions();
+  composer.resize(initialDims.width, initialDims.height, initialDims.pixelRatio);
+  composer.setOutlinesEnabled(settingsPanel.isOutlinesEnabled());
 
   const fpsCounter = new FpsCounter();
   const wakeLock = new ScreenWakeLock();
@@ -108,7 +127,8 @@ function startGame(): void {
     },
     onModeChange: (mode) => {
       joystickRef.instance?.setVisible(mode === "touch");
-      worldRenderer.setTouchMode(mode === "touch");
+      const dims = worldRenderer.setTouchMode(mode === "touch");
+      composer?.resize(dims.width, dims.height, dims.pixelRatio);
       updateMouseLockButton(mode, inputManager.isPointerLocked());
       updateControlsHint(mode, inputManager.isPointerLocked());
     },
@@ -197,9 +217,10 @@ function startGame(): void {
         character.group.rotation.y = facingYaw;
       },
       onRender: (dt) => {
+        sky.update(dt);
         character.updateAnimation(currentSpeedRatio, currentIsRunning, dt);
         cameraController.update(playerX, 0, playerZ);
-        worldRenderer.render(scene, cameraController.camera);
+        composer?.render();
       },
       onFpsSample: (fps) => {
         fpsCounter.setFps(fps);
@@ -212,4 +233,8 @@ function startGame(): void {
   void checkServerStatus();
 }
 
-startGame();
+if (window.location.pathname === "/lab") {
+  startLabPage();
+} else {
+  startWorldGame();
+}

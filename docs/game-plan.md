@@ -323,14 +323,16 @@ Stage 8 only prepares the foundation; factory mechanics are built after the owne
 
 **AI does:**
 
-- Toon shader with 3 to 4 color levels per surface, no smooth gradients.
-- Thick outlines on all objects and characters (edge detection pass based on depth and surface direction); thickness tunable in configuration.
+- Toon shader with 2 discrete cel-shading levels per surface (`TOON_LEVELS = 2`), no smooth gradients.
+- Crisp `1.0px` default outlines on all objects and characters (`OUTLINE_THICKNESS_PX = 1.0`, edge detection pass based on depth and surface-normal creases); thickness tunable in configuration and `/lab`.
 - Hard one-level dark shadows with crisp edges.
 - Procedural sky: turquoise gradient with textured cloud strokes, moving slowly.
 - A color theme file whose palette is taken from the reference image, so the whole game uses the same colors.
 - Low third-person camera with wide field of view like the reference image (values in configuration).
-- New cartoon-proportioned character: dark hair with bangs, white T-shirt, wide black pants, turquoise backpack, red shoes; idle and walk animations.
-- A `/lab` page showing the character from four sides, color palette, material samples, sky, and HUD button samples side by side for comparison with the reference image.
+- Modular cartoon-proportioned characters built via the standardized headless Blender `.glb` pipeline (`K1` through `K5`) with **gender selection (`Male` / `Female`)**, **2 default character designs**, and **separated modular outfit slots** (`BodyMesh`, `HairMesh`, `TopMesh` [upper garment], `BottomMesh` [lower garment], `ShoesMesh` [footwear], `BagMesh` [bag]) so future skins can be created and swapped per slot:
+  - **Male Default Design (`male`, default skin):** shaggy dark slate-teal hair, oversized orange pullover hoodie with folded hood, V-collar, grey drawstrings, and sculpted long-sleeve folds, crimson-red backpack with 3D white `"Hi"` + bars graphic and thick shoulder straps, baggy cropped dark charcoal joggers, bare lower calves, off-white crew socks, and chunky dark high-top sneakers with twin white stripes.
+  - **Female Default Design (`female`):** dark bob hair with swept bangs and upper-back twin buns with golden-yellow hair ties, A-line oversized cyan/off-white color-blocked short-sleeve T-shirt, golden-yellow crossbody sling bag at the front-left hip, baggy cropped dark charcoal joggers, bare lower calves, off-white crew socks, and chunky dark high-top sneakers with twin white stripes.
+- A `/lab` page showing the character from four sides (with live `Male` / `Female` preset switching and modular `Top`, `Bottom`, `Shoes`, `Bag` slot selectors), color palette, material samples, sky, and HUD button samples side by side for comparison with the reference image.
 - The Stage 1A test world gets walls and colored boxes as material for judging outlines and shadows.
 - An option to turn off outlines in settings, for weak phones.
 

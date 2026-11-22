@@ -30,6 +30,27 @@
             FPS
           </button>
           <div id="fps-counter" class="hud-pill hidden">FPS: --</div>
+          <button id="settings-toggle" class="hud-button" type="button" aria-label="Open Settings">
+            Settings
+          </button>
+        </div>
+
+        <div id="settings-panel" class="settings-panel hidden" role="dialog" aria-label="Settings">
+          <div class="settings-title">Character &amp; Outfit</div>
+          <button id="gender-toggle" class="settings-action" type="button">
+            Gender: Male (Default)
+          </button>
+          <button id="top-skin-toggle" class="settings-action" type="button">
+            Top: Orange Hoodie
+          </button>
+          <button id="bag-skin-toggle" class="settings-action" type="button">
+            Bag: Red Hi Backpack
+          </button>
+          <div class="settings-title">Graphics</div>
+          <button id="outlines-toggle" class="settings-action" type="button" aria-pressed="true">
+            Outlines: ON
+          </button>
+          <a class="settings-link" href="/lab">Open Visual Lab (/lab)</a>
         </div>
 
         <div id="controls-hint" class="hud-pill hud-bottom-right">
@@ -50,6 +71,8 @@
         </div>
       </div>
     </div>
+
+    <div id="lab-root" class="lab-root hidden"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
