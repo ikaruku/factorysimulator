@@ -1,14 +1,12 @@
 import * as THREE from "three";
 import {
   ASSET_PATHS,
-  BAG_SKIN_OPTIONS,
-  BOTTOM_SKIN_OPTIONS,
   CHARACTER_MESH_SLOTS,
   DEFAULT_CHARACTER_LOADOUTS,
   MOVEMENT_CONFIG,
-  SHOES_SKIN_OPTIONS,
-  TOP_SKIN_OPTIONS,
+  OUTFIT_SLOT_KEYS,
   getDefaultLoadoutForGender,
+  getOutfitSkinOption,
   type CharacterGender,
   type CharacterLoadout,
 } from "@factory-simulator/shared";
@@ -217,38 +215,25 @@ export class CharacterAvatar {
     baseScene: THREE.Object3D,
     loadout: CharacterLoadout,
   ): Promise<void> {
-    const slotSources: Record<"top" | "bottom" | "shoes" | "bag", CharacterGender | null> = {
-      top: TOP_SKIN_OPTIONS.find((o) => o.id === loadout.top)?.sourceGender ?? loadout.gender,
-      bottom:
-        BOTTOM_SKIN_OPTIONS.find((o) => o.id === loadout.bottom)?.sourceGender ?? loadout.gender,
-      shoes: SHOES_SKIN_OPTIONS.find((o) => o.id === loadout.shoes)?.sourceGender ?? loadout.gender,
-      bag: BAG_SKIN_OPTIONS.find((o) => o.id === loadout.bag)?.sourceGender ?? null,
-    };
-
-    const needsOppositeGender = Object.values(slotSources).some(
-      (src) => src !== null && src !== loadout.gender,
-    );
-    const oppositeGender: CharacterGender = loadout.gender === "male" ? "female" : "male";
-    const donorScene = needsOppositeGender
-      ? (await loadToonGlb(getCharacterGlbPath(oppositeGender))).scene
-      : null;
-
-    for (const slotKey of ["top", "bottom", "shoes", "bag"] as const) {
+    for (const slotKey of OUTFIT_SLOT_KEYS) {
       const nodeName = SLOT_NODE_BY_KEY[slotKey];
       const existingNode = baseScene.getObjectByName(nodeName);
-      const sourceGender = slotSources[slotKey];
+      const option = getOutfitSkinOption(slotKey, loadout[slotKey]);
 
-      if (sourceGender === null) {
+      if (!option || option.assetPath === null) {
         if (existingNode) existingNode.visible = false;
         continue;
       }
 
-      if (sourceGender === loadout.gender || !donorScene) {
+      // Default slot for this gender is already embedded inside the base character GLB
+      if (option.sourceGender === loadout.gender) {
         if (existingNode) existingNode.visible = true;
         continue;
       }
 
-      const donorNode = donorScene.getObjectByName(nodeName);
+      // Otherwise load the standalone modular part GLB from /content/characters/parts/<slot>/<id>.glb
+      const partGlb = await loadToonGlb(option.assetPath);
+      const donorNode = partGlb.scene.getObjectByName(nodeName);
       if (!donorNode || !existingNode || !existingNode.parent) continue;
 
       const parent = existingNode.parent;

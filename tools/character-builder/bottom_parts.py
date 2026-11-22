@@ -1,8 +1,8 @@
 """
-Modular `BottomMesh` (Pakaian Bawah) slot builders for Male & Female Abeto characters:
+Modular `BottomMesh` (lower garment) slot builders for Male & Female Abeto characters:
 - `build_bottom_charcoal_joggers()`: Default Male baggy cropped dark charcoal joggers (#22262B)
   with sculpted angular outer-calf folds + off-white crew socks (#DCE0D8).
-- `build_bottom_charcoal_shorts()`: Separate Female shorts model (`celana pendek`, #22262B)
+- `build_bottom_charcoal_shorts()`: Separate Female shorts model (#22262B)
   with relaxed tailored A-line silhouette, sculpted thigh folds, and cuffed hem above the
   knee (`z = 0.49`), paired with off-white crew socks (#E2E6DE, `z = 0.14..0.24`).
 """

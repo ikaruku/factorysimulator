@@ -8,9 +8,9 @@ Top reference: `docs/game-plan.md`. If anything conflicts with it, that document
 - **Character & Outfit Modularity Standard (Mandatory):**
   - Default outline thickness is `1.0px` (`VISUAL_CONFIG.OUTLINE_THICKNESS_PX = 1.0`), paired with 2-tone Abeto cel shading (`TOON_LEVELS = 2`).
   - Characters support gender selection (`male` and `female`) with 2 canonical default designs:
-    - `male` (default skin): shaggy slate-teal hair, oversized orange pullover hoodie with folded hood & grey drawstrings, Nike Heritage coral-red backpack (`red-backpack`, `"Nike Red Backpack"`), cropped charcoal joggers, white crew socks, chunky high-top dark sneakers (`content/characters/male/character.glb` & `content/characters/default/character.glb`).
-    - `female` (default skin): dark bob hair with twin buns & yellow ties, A-line cyan/off-white color-blocked T-shirt, golden-yellow crossbody sling bag, charcoal shorts (`celana pendek`), white crew socks, chunky off-white high-top strap sneakers (`content/characters/female/character.glb`).
-  - Every character `.glb` and builder script MUST keep the 6 modular mesh slots separated (`BodyMesh`, `HairMesh`, `TopMesh` [pakaian atas], `BottomMesh` [pakaian bawah], `ShoesMesh` [sepatu], `BagMesh` [tas]) bound to the shared `CharacterRig` skeleton so outfit parts can always be swapped or extended with new skins independently.
+    - `male` (default skin): shaggy slate-teal hair, oversized orange pullover hoodie with folded hood & grey drawstrings, Nike Heritage coral-red backpack (`red-backpack`, `"Nike Red Backpack"`), cropped charcoal joggers, white crew socks, chunky high-top dark sneakers (`content/characters/male/character.glb`).
+    - `female` (default skin): dark bob hair with twin buns & yellow ties, A-line cyan/off-white color-blocked T-shirt, golden-yellow crossbody sling bag, charcoal shorts, white crew socks, chunky off-white high-top strap sneakers (`content/characters/female/character.glb`).
+  - Every character `.glb` and builder script MUST keep the 6 modular mesh slots separated (`BodyMesh`, `HairMesh`, `TopMesh` [upper garment], `BottomMesh` [lower garment], `ShoesMesh` [footwear], `BagMesh` [bag]) bound to the shared 22-bone `CharacterRig` skeleton, AND export each outfit item into its own standalone `.glb` file under `content/characters/parts/{top,bottom,shoes,bag}/<id>.glb` (registered via `assetPath` in `packages/shared/src/constants/character-skins.ts`). Never duplicate character `.glb` files into a separate `default/` folder, and always clean stale preview renders in `tools/.cache/previews/` on build.
 - `client` and `server` may only import from `shared`, never from each other.
 - Network message types and names live only in `packages/shared/src/protocol`.
 - The server owns state; game data lives in `content/`; no magic numbers (use configuration).
@@ -18,6 +18,6 @@ Top reference: `docs/game-plan.md`. If anything conflicts with it, that document
 - TypeScript strict, no `any`.
 - Naming: files `kebab-case`, classes `PascalCase`, functions/variables `camelCase`, constants `UPPER_SNAKE_CASE`.
 - Commands: `pnpm dev`, `pnpm test`, `pnpm lint`, `pnpm build`, `pnpm setup:blender`, `pnpm build:character`.
-- Conventional Commits; update `CHANGELOG.md` and READMEs each stage.
+- Conventional Commits; update `PROGRESS.md`, `CHANGELOG.md`, and READMEs each stage/sub-stage.
 - Done means: lint and tests pass, dev runs without errors, docs updated, user has tried it.
 - Secrets and local caches (`tools/.cache/`) never go into git.

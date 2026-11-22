@@ -1,5 +1,5 @@
 """
-Modular `BagMesh` (Tas) slot builders for Male & Female Abeto characters:
+Modular `BagMesh` (bag) slot builders for Male & Female Abeto characters:
 - `build_bag_red_backpack()`: Default Male Nike Heritage Coral-Red Backpack (#D24442) with
   arch-top dome silhouette, crisp 1024x1024 white "NIKE" + Swoosh logo, 3D raised zipper welt,
   3D protruding lower front box pocket with overhanging zipper flap hood and vertical pull tab,

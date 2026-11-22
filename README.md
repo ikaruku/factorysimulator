@@ -2,7 +2,7 @@
 
 Open-world 3D multiplayer game with a factory theme (browser: laptop, tablet, phone). Factory mechanics come after the open world is finished.
 
-Primary reference: [docs/game-plan.md](docs/game-plan.md) (defines scope, stages and test gates). Project standards: [docs/standards.md](docs/standards.md). Summary: [docs/preparation-summary.md](docs/preparation-summary.md).
+Primary reference: [docs/game-plan.md](docs/game-plan.md) (defines scope, stages and test gates). Live stage & sub-stage tracker: [PROGRESS.md](PROGRESS.md). Project standards: [docs/standards.md](docs/standards.md). Summary: [docs/preparation-summary.md](docs/preparation-summary.md).
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ All 3D assets (characters, props, buildings, machines, and map pieces) are built
 
 ```bash
 pnpm setup:blender    # caches portable Blender 4.2 LTS in tools/.cache/blender/
-pnpm build:character  # exports content/characters/default/character.glb + 4-angle previews
+pnpm build:character  # exports male/female character GLBs, standalone parts/*.glb & previews
 ```
 
 ## Controls & Visual Lab

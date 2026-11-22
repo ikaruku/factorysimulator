@@ -1,5 +1,5 @@
 """
-Modular `TopMesh` (Pakaian Atas) slot builders for Male & Female Abeto characters:
+Modular `TopMesh` (upper garment) slot builders for Male & Female Abeto characters:
 - `build_top_orange_hoodie()`: Default Male oversized orange pullover hoodie (#DE6F45) with
   plump folded hood, V-collar, dark-grey drawstrings + white eyelets, and long sculpted sleeves
   with elbow & forearm cloth creases.

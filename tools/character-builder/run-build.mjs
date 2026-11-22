@@ -10,15 +10,44 @@ const SCRIPT_PATH = path.join(__dirname, "build_character.py");
 const MAX_GLB_BYTES = 5 * 1024 * 1024;
 
 const GENDERS = ["male", "female"];
+const EXPECTED_PARTS_BY_GENDER = {
+  male: [
+    "top/orange-hoodie.glb",
+    "bottom/charcoal-joggers.glb",
+    "shoes/high-top-sneakers.glb",
+    "bag/red-backpack.glb",
+  ],
+  female: [
+    "top/cyan-colorblock-tee.glb",
+    "bottom/charcoal-shorts.glb",
+    "shoes/white-strap-sneakers.glb",
+    "bag/yellow-crossbody.glb",
+  ],
+};
+
 const blenderExe = ensureBlender();
 
+const charactersDir = path.join(REPO_ROOT, "content", "characters");
+const partsDir = path.join(charactersDir, "parts");
+const previewRootDir = path.join(REPO_ROOT, "tools", ".cache", "previews", "character");
+
+// Remove legacy duplicate 'content/characters/default' folder and stale preview files
+const legacyDefaultDir = path.join(charactersDir, "default");
+if (fs.existsSync(legacyDefaultDir)) {
+  fs.rmSync(legacyDefaultDir, { recursive: true, force: true });
+}
+if (fs.existsSync(previewRootDir)) {
+  fs.rmSync(previewRootDir, { recursive: true, force: true });
+}
+fs.mkdirSync(partsDir, { recursive: true });
+
 for (const gender of GENDERS) {
-  const outputGlb = path.join(REPO_ROOT, "content", "characters", gender, "character.glb");
-  const previewDir = path.join(REPO_ROOT, "tools", ".cache", "previews", "character", gender);
+  const outputGlb = path.join(charactersDir, gender, "character.glb");
+  const previewDir = path.join(previewRootDir, gender);
   fs.mkdirSync(path.dirname(outputGlb), { recursive: true });
   fs.mkdirSync(previewDir, { recursive: true });
 
-  console.log(`[character-builder] Building modular '${gender}' character preset...`);
+  console.log(`[character-builder] Building modular '${gender}' character & standalone parts...`);
   execFileSync(
     blenderExe,
     [
@@ -35,6 +64,8 @@ for (const gender of GENDERS) {
       outputGlb,
       "--preview-dir",
       previewDir,
+      "--parts-dir",
+      partsDir,
     ],
     { stdio: "inherit" },
   );
@@ -54,13 +85,17 @@ for (const gender of GENDERS) {
     `[character-builder] Exported ${path.relative(REPO_ROOT, outputGlb)} (${(stat.size / 1024).toFixed(1)} KB)`,
   );
 
-  // Copy approved 'male' default character to content/characters/default/character.glb
-  if (gender === "male") {
-    const defaultGlb = path.join(REPO_ROOT, "content", "characters", "default", "character.glb");
-    fs.mkdirSync(path.dirname(defaultGlb), { recursive: true });
-    fs.copyFileSync(outputGlb, defaultGlb);
+  for (const relPart of EXPECTED_PARTS_BY_GENDER[gender]) {
+    const partGlb = path.join(partsDir, relPart);
+    if (!fs.existsSync(partGlb)) {
+      throw new Error(`Expected standalone modular part GLB was not created at ${partGlb}`);
+    }
+    const partStat = fs.statSync(partGlb);
+    if (partStat.size > MAX_GLB_BYTES) {
+      throw new Error(`Modular part GLB (${relPart}) exceeds 5 MB limit`);
+    }
     console.log(
-      `[character-builder] Updated default character skin at ${path.relative(REPO_ROOT, defaultGlb)}`,
+      `[character-builder] Exported part ${path.relative(REPO_ROOT, partGlb)} (${(partStat.size / 1024).toFixed(1)} KB)`,
     );
   }
 }

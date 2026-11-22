@@ -5,10 +5,10 @@
  * skinned mesh child nodes bound to the shared `CharacterRig` skeleton:
  * - `BodyMesh`   (base body, head, face UV, hands, bare lower legs)
  * - `HairMesh`   (gender/style hair mesh)
- * - `TopMesh`    (upper garment / pakaian atas)
- * - `BottomMesh` (lower garment / pakaian bawah)
- * - `ShoesMesh`  (footwear / sepatu)
- * - `BagMesh`    (backpack or sling bag / tas)
+ * - `TopMesh`    (upper garment)
+ * - `BottomMesh` (lower garment)
+ * - `ShoesMesh`  (footwear)
+ * - `BagMesh`    (backpack or sling bag)
  */
 
 export const CHARACTER_GENDERS = ["male", "female"] as const;
@@ -38,7 +38,9 @@ export interface OutfitSkinOption<TId extends string = string> {
   readonly id: TId;
   readonly label: string;
   readonly slot: OutfitSlotKey;
-  /** Source character GLB preset containing this slot's SkinnedMesh (`null` hides the slot). */
+  /**Standalone `.glb` asset path under `/content/characters/parts/<slot>/<id>.glb` (`null` hides slot). */
+  readonly assetPath: string | null;
+  /** Default gender preset that already embeds this part (`null` for standalone add-on skins or hidden slot). */
   readonly sourceGender: CharacterGender | null;
 }
 
@@ -47,12 +49,14 @@ export const TOP_SKIN_OPTIONS: readonly OutfitSkinOption<TopSkinId>[] = [
     id: "orange-hoodie",
     label: "Orange Hoodie",
     slot: "top",
+    assetPath: "/content/characters/parts/top/orange-hoodie.glb",
     sourceGender: "male",
   },
   {
     id: "cyan-colorblock-tee",
     label: "Cyan/White Tee",
     slot: "top",
+    assetPath: "/content/characters/parts/top/cyan-colorblock-tee.glb",
     sourceGender: "female",
   },
 ] as const;
@@ -62,12 +66,14 @@ export const BOTTOM_SKIN_OPTIONS: readonly OutfitSkinOption<BottomSkinId>[] = [
     id: "charcoal-joggers",
     label: "Charcoal Joggers",
     slot: "bottom",
+    assetPath: "/content/characters/parts/bottom/charcoal-joggers.glb",
     sourceGender: "male",
   },
   {
     id: "charcoal-shorts",
     label: "Charcoal Shorts",
     slot: "bottom",
+    assetPath: "/content/characters/parts/bottom/charcoal-shorts.glb",
     sourceGender: "female",
   },
 ] as const;
@@ -77,12 +83,14 @@ export const SHOES_SKIN_OPTIONS: readonly OutfitSkinOption<ShoesSkinId>[] = [
     id: "high-top-sneakers",
     label: "Dark High-Tops",
     slot: "shoes",
+    assetPath: "/content/characters/parts/shoes/high-top-sneakers.glb",
     sourceGender: "male",
   },
   {
     id: "white-strap-sneakers",
     label: "White Strap High-Tops",
     slot: "shoes",
+    assetPath: "/content/characters/parts/shoes/white-strap-sneakers.glb",
     sourceGender: "female",
   },
 ] as const;
@@ -92,21 +100,37 @@ export const BAG_SKIN_OPTIONS: readonly OutfitSkinOption<BagSkinId>[] = [
     id: "red-backpack",
     label: "Nike Red Backpack",
     slot: "bag",
+    assetPath: "/content/characters/parts/bag/red-backpack.glb",
     sourceGender: "male",
   },
   {
     id: "yellow-crossbody",
     label: "Yellow Sling Bag",
     slot: "bag",
+    assetPath: "/content/characters/parts/bag/yellow-crossbody.glb",
     sourceGender: "female",
   },
   {
     id: "none",
     label: "No Bag",
     slot: "bag",
+    assetPath: null,
     sourceGender: null,
   },
 ] as const;
+
+/** Looks up the metadata (including standalone `.glb` `assetPath`) for any outfit slot skin ID. */
+export function getOutfitSkinOption(slot: OutfitSlotKey, id: string): OutfitSkinOption | undefined {
+  const list: readonly OutfitSkinOption[] =
+    slot === "top"
+      ? TOP_SKIN_OPTIONS
+      : slot === "bottom"
+        ? BOTTOM_SKIN_OPTIONS
+        : slot === "shoes"
+          ? SHOES_SKIN_OPTIONS
+          : BAG_SKIN_OPTIONS;
+  return list.find((item) => item.id === id);
+}
 
 export interface CharacterLoadout {
   readonly gender: CharacterGender;

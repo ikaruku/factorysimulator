@@ -1,5 +1,5 @@
 """
-Modular `ShoesMesh` (Sepatu) slot builders for Male & Female Abeto characters:
+Modular `ShoesMesh` (footwear) slot builders for Male & Female Abeto characters:
 - `build_shoes_high_top_sneakers()`: Default Male chunky dark high-top skate sneakers (#1E2228)
   with flat dark sole (#171B20), padded ankle collar, tall tongue, and twin white stripes.
 - `build_shoes_white_strap_sneakers()`: Default Female chunky off-white high-top strap sneakers

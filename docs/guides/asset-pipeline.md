@@ -33,24 +33,30 @@ All player characters MUST follow the modular slot standard so gender presets an
 ### A. Two Canonical Default Gender Designs
 
 1. **Male Default (`male` — Default game skin):**
-   - Output: `content/characters/male/character.glb` (also copied to `content/characters/default/character.glb`).
+   - Output: `content/characters/male/character.glb`.
    - Design: Shaggy dark slate-teal hair (`#25323A`), oversized orange pullover hoodie (`#DE6F45`) with plump folded hood, V-collar, grey drawstrings, and sculpted long-sleeve elbow/forearm creases, Nike Heritage coral-red backpack (`#D24442`, `"Nike Red Backpack"`) with arch-top dome, white `"NIKE"` + Swoosh logo, 3D lower front box pocket with overhanging zipper flap hood and pull tab, top haul loop handle, and padded shoulder straps, baggy cropped charcoal joggers (`#22262B`), bare lower calves, off-white crew socks (`#DCE0D8`), and chunky high-top dark sneakers (`#1E2228`) with twin white stripes.
 2. **Female Default (`female`):**
    - Output: `content/characters/female/character.glb`.
    - Design: Dark bob hair (`#1F242B`) with swept bangs and upper-back twin buns with golden-yellow hair ties (`#E5A530`), A-line oversized cyan (`#2FA6CC`) / off-white (`#E4E8E0`) color-blocked short-sleeve T-shirt, golden-yellow crossbody sling bag (`#E5A530`) at the front-left hip, tailored dark charcoal shorts (`#22262B`, `charcoal-shorts`), off-white crew socks (`#E2E6DE`), and chunky off-white high-top strap sneakers (`#E6EAE2` upper, `#A4BAB0` mid-foot strap, `#1E2228` platform sole, `white-strap-sneakers`).
 
-### B. Six Mandatory Separated SkinnedMesh Slots
+### B. Six Mandatory Separated SkinnedMesh Slots & Standalone Part GLBs
 
-Every character `.glb` must export **6 separate named mesh nodes** parented and skinned to the shared `CharacterRig` skeleton (and mirrored in modular Python files inside `tools/character-builder/`):
+Every character `.glb` must export **6 separate named mesh nodes** parented and skinned to the shared 22-bone `CharacterRig` skeleton, and every outfit item (`TopMesh`, `BottomMesh`, `ShoesMesh`, `BagMesh`) must also be exported to its own standalone `.glb` file in `content/characters/parts/<slot>/<id>.glb`:
 
-| glTF Node Name | Builder Module    | Role / Slot Description                                                       |
-| -------------- | ----------------- | ----------------------------------------------------------------------------- |
-| `BodyMesh`     | `body_mesh.py`    | Base human body, forearms, hands, sculpted knees/calves, head & face UVs      |
-| `HairMesh`     | `hair_parts.py`   | Hair style mesh (`shaggy_male`, `twin_buns_female`, etc.)                     |
-| `TopMesh`      | `top_parts.py`    | Upper garment / _Pakaian Atas_ (`orange-hoodie`, `cyan-colorblock-tee`, etc.) |
-| `BottomMesh`   | `bottom_parts.py` | Lower garment / _Pakaian Bawah_ (`charcoal-joggers`, `charcoal-shorts`, etc.) |
-| `ShoesMesh`    | `shoe_parts.py`   | Footwear / _Sepatu_ (`high-top-sneakers`, `white-strap-sneakers`, etc.)       |
-| `BagMesh`      | `bag_parts.py`    | Backpack or sling bag / _Tas_ (`red-backpack`, `yellow-crossbody`, or hidden) |
+| glTF Node Name | Builder Module    | Standalone Part Folder             | Role / Slot Description                                                  |
+| -------------- | ----------------- | ---------------------------------- | ------------------------------------------------------------------------ |
+| `BodyMesh`     | `body_mesh.py`    | _(embedded in gender base GLB)_    | Base human body, forearms, hands, sculpted knees/calves, head & face UVs |
+| `HairMesh`     | `hair_parts.py`   | _(embedded in gender base GLB)_    | Hair style mesh (`shaggy_male`, `twin_buns_female`, etc.)                |
+| `TopMesh`      | `top_parts.py`    | `content/characters/parts/top/`    | Upper garment (`orange-hoodie.glb`, `cyan-colorblock-tee.glb`)           |
+| `BottomMesh`   | `bottom_parts.py` | `content/characters/parts/bottom/` | Lower garment (`charcoal-joggers.glb`, `charcoal-shorts.glb`)            |
+| `ShoesMesh`    | `shoe_parts.py`   | `content/characters/parts/shoes/`  | Footwear (`high-top-sneakers.glb`, `white-strap-sneakers.glb`)           |
+| `BagMesh`      | `bag_parts.py`    | `content/characters/parts/bag/`    | Backpack or sling bag (`red-backpack.glb`, `yellow-crossbody.glb`)       |
+
+To add a new outfit skin in the future:
+
+1. Build and export its standalone `.glb` into `content/characters/parts/<slot>/<new-id>.glb` bound to `CharacterRig`.
+2. Register `{ id: "<new-id>", label: "...", slot: "<slot>", assetPath: "/content/characters/parts/<slot>/<new-id>.glb", sourceGender: null }` in `packages/shared/src/constants/character-skins.ts`.
+3. `CharacterAvatar` loads the standalone part `.glb` on demand and rebinds its bones by name (`rebindSkinnedMeshByBoneName`) onto the active character without touching `male/character.glb` or `female/character.glb`.
 
 ### C. Sculpting Quality Standard
 

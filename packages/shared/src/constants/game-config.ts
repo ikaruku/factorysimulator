@@ -86,12 +86,14 @@ export const RENDER_CONFIG = {
 
 /** Standardized runtime paths for data-driven assets served from content/. */
 export const ASSET_PATHS = {
-  /** Default player character glTF binary asset (male default skin). */
-  DEFAULT_CHARACTER_GLB: "/content/characters/default/character.glb",
+  /** Default player character glTF binary asset (points to male default skin, zero duplicate file). */
+  DEFAULT_CHARACTER_GLB: "/content/characters/male/character.glb",
   /** Male default character glTF binary asset. */
   MALE_CHARACTER_GLB: "/content/characters/male/character.glb",
   /** Female default character glTF binary asset. */
   FEMALE_CHARACTER_GLB: "/content/characters/female/character.glb",
+  /** Root directory for standalone modular outfit part GLBs (`top`, `bottom`, `shoes`, `bag`). */
+  CHARACTER_PARTS_DIR: "/content/characters/parts",
 } as const;
 
 /** Stage 1B toon shader, outline pass, and procedural sky configuration. */

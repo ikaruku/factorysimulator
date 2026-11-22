@@ -18,10 +18,11 @@ The client loads `.glb` assets through a unified Three.js `GLTFLoader` + `Animat
 - **Format:** glTF 2.0 `.glb` (binary), Y-up, scale `1 unit = 1 meter`.
 - **Orientation:** Front faces `-Z`, origin `(0, 0, 0)` rests on the ground plane (`y = 0`).
 - **Outlines & Shading:** `1.0 px` default outline thickness (`OUTLINE_THICKNESS_PX = 1.0`), 2-tone stepped cel shading (`TOON_LEVELS = 2`).
-- **Modular Character Slots:** Every character `.glb` exports 6 separate named `SkinnedMesh` nodes bound to `CharacterRig`: `BodyMesh`, `HairMesh`, `TopMesh` (upper garment), `BottomMesh` (lower garment), `ShoesMesh` (footwear), and `BagMesh` (bag), with 2 default gender presets (`content/characters/male/character.glb` [also copied to `content/characters/default/character.glb`] and `content/characters/female/character.glb`).
+- **Modular Character Slots & Standalone Part GLBs:** Every character `.glb` exports 6 separate named `SkinnedMesh` nodes bound to the canonical 22-bone `CharacterRig`: `BodyMesh`, `HairMesh`, `TopMesh` (upper garment), `BottomMesh` (lower garment), `ShoesMesh` (footwear), and `BagMesh` (bag), with 2 default gender presets (`content/characters/male/character.glb` and `content/characters/female/character.glb`). Additionally, every outfit item is exported as its own standalone `.glb` file under `content/characters/parts/{top,bottom,shoes,bag}/<id>.glb` and loaded on demand via `assetPath` in `character-skins.ts`.
 - **Budgets:** Max `5 MB` per `.glb`, textures max `2048 px` (`1024 px` target for mobile), compressed.
 - **Storage:**
-  - `content/characters/<name>/character.glb`
+  - `content/characters/{male,female}/character.glb`
+  - `content/characters/parts/{top,bottom,shoes,bag}/<id>.glb`
   - `content/props/<name>/<name>.glb`
   - `content/buildings/<name>/<name>.glb`
   - `content/maps/<name>/...`

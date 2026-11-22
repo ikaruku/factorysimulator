@@ -6,6 +6,7 @@ import {
   DEFAULT_CHARACTER_LOADOUTS,
   VISUAL_CONFIG,
   getDefaultLoadoutForGender,
+  getOutfitSkinOption,
 } from "@factory-simulator/shared";
 import {
   computeAnimationTimeScale,
@@ -67,6 +68,19 @@ describe("modular character gender & slot configuration", () => {
     expect(CHARACTER_MESH_SLOTS.BOTTOM).toBe("BottomMesh");
     expect(CHARACTER_MESH_SLOTS.SHOES).toBe("ShoesMesh");
     expect(CHARACTER_MESH_SLOTS.BAG).toBe("BagMesh");
+    expect(getOutfitSkinOption("top", "orange-hoodie")?.assetPath).toBe(
+      "/content/characters/parts/top/orange-hoodie.glb",
+    );
+    expect(getOutfitSkinOption("bottom", "charcoal-shorts")?.assetPath).toBe(
+      "/content/characters/parts/bottom/charcoal-shorts.glb",
+    );
+    expect(getOutfitSkinOption("shoes", "white-strap-sneakers")?.assetPath).toBe(
+      "/content/characters/parts/shoes/white-strap-sneakers.glb",
+    );
+    expect(getOutfitSkinOption("bag", "red-backpack")?.assetPath).toBe(
+      "/content/characters/parts/bag/red-backpack.glb",
+    );
+    expect(getOutfitSkinOption("bag", "none")?.assetPath).toBeNull();
     expect(VISUAL_CONFIG.OUTLINE_THICKNESS_PX).toBe(1.0);
   });
 });

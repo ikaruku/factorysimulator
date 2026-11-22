@@ -5,10 +5,10 @@ Builds a complete character preset (`--gender male` or `--gender female`) keepin
 standardized modular mesh slots SEPARATE inside the exported `.glb` hierarchy:
 - `BodyMesh`   (base human body, sculpted anime head, cylindrical 1024x1024 face UV, hands, legs)
 - `HairMesh`   (male: shaggy slate-teal hair; female: dark bob with twin buns & yellow ties)
-- `TopMesh`    (pakaian atas — male: orange pullover hoodie; female: cyan/off-white color-blocked tee)
-- `BottomMesh` (pakaian bawah — male: cropped charcoal joggers; female: charcoal shorts)
-- `ShoesMesh`  (sepatu — male: chunky dark high-top sneakers; female: off-white strap high-tops)
-- `BagMesh`    (tas — male: Nike Red Backpack; female: golden-yellow crossbody sling bag)
+- `TopMesh`    (upper garment — male: orange pullover hoodie; female: cyan/off-white color-blocked tee)
+- `BottomMesh` (lower garment — male: cropped charcoal joggers; female: charcoal shorts)
+- `ShoesMesh`  (footwear — male: chunky dark high-top sneakers; female: off-white strap high-tops)
+- `BagMesh`    (bag — male: Nike Red Backpack; female: golden-yellow crossbody sling bag)
 
 All 6 slot meshes carry normalized slot-aware smooth weights bound to the canonical 22-bone
 `CharacterRig` armature, exporting seamless looping `Idle`, `Walk`, and `Run` NLA strips and
@@ -59,7 +59,24 @@ def parse_args():
     parser.add_argument("--gender", choices=("male", "female"), default="male")
     parser.add_argument("--output", required=True)
     parser.add_argument("--preview-dir", required=True)
+    parser.add_argument("--parts-dir", default="")
     return parser.parse_args(argv)
+
+
+PART_EXPORT_SPEC_BY_GENDER = {
+    "male": (
+        ("top", "orange-hoodie", "TopMesh"),
+        ("bottom", "charcoal-joggers", "BottomMesh"),
+        ("shoes", "high-top-sneakers", "ShoesMesh"),
+        ("bag", "red-backpack", "BagMesh"),
+    ),
+    "female": (
+        ("top", "cyan-colorblock-tee", "TopMesh"),
+        ("bottom", "charcoal-shorts", "BottomMesh"),
+        ("shoes", "white-strap-sneakers", "ShoesMesh"),
+        ("bag", "yellow-crossbody", "BagMesh"),
+    ),
+}
 
 
 def clear_scene():
@@ -110,12 +127,46 @@ def export_glb(output_path):
     )
 
 
+def export_standalone_part_glbs(gender, arm_obj, slot_meshes, parts_dir):
+    """
+    Exports each modular outfit slot (`top`, `bottom`, `shoes`, `bag`) into its own standalone
+    skinned `.glb` file (`content/characters/parts/<slot>/<id>.glb`) bound to `CharacterRig`.
+    """
+    if not parts_dir:
+        return
+    mesh_by_name = {obj.name: obj for obj in slot_meshes}
+    for slot_folder, part_id, node_name in PART_EXPORT_SPEC_BY_GENDER[gender]:
+        mesh_obj = mesh_by_name.get(node_name)
+        if mesh_obj is None:
+            continue
+        part_path = os.path.join(parts_dir, slot_folder, f"{part_id}.glb")
+        os.makedirs(os.path.dirname(part_path), exist_ok=True)
+        bpy.ops.object.select_all(action="DESELECT")
+        arm_obj.select_set(True)
+        mesh_obj.select_set(True)
+        bpy.context.view_layer.objects.active = arm_obj
+        bpy.ops.export_scene.gltf(
+            filepath=part_path,
+            export_format="GLB",
+            use_selection=True,
+            export_yup=True,
+            export_apply=False,
+            export_animations=False,
+            export_materials="EXPORT",
+        )
+    bpy.ops.object.select_all(action="DESELECT")
+
+
 def main():
     args = parse_args()
     clear_scene()
     slot_meshes = build_modular_character_slots(args.gender)
     arm_obj = create_humanoid_armature()
     bind_slots_to_armature(slot_meshes, arm_obj)
+
+    # Export standalone modular outfit part GLBs in clean rest pose before authoring NLA clips
+    export_standalone_part_glbs(args.gender, arm_obj, slot_meshes, args.parts_dir)
+
     idle_action, walk_action, run_action = author_k5_gameplay_clips(arm_obj)
 
     # Render standard 6-angle rest/idle turnaround previews
