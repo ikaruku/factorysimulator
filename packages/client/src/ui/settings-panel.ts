@@ -1,11 +1,15 @@
 import {
   BAG_SKIN_OPTIONS,
+  BOTTOM_SKIN_OPTIONS,
   DEFAULT_CHARACTER_LOADOUTS,
+  SHOES_SKIN_OPTIONS,
   TOP_SKIN_OPTIONS,
   getDefaultLoadoutForGender,
   type BagSkinId,
+  type BottomSkinId,
   type CharacterGender,
   type CharacterLoadout,
+  type ShoesSkinId,
   type TopSkinId,
 } from "@factory-simulator/shared";
 
@@ -45,12 +49,14 @@ export function loadCharacterLoadoutPreference(): CharacterLoadout {
     const gender: CharacterGender = parsed.gender === "female" ? "female" : "male";
     const def = DEFAULT_CHARACTER_LOADOUTS[gender];
     const topValid = TOP_SKIN_OPTIONS.some((o) => o.id === parsed.top);
+    const bottomValid = BOTTOM_SKIN_OPTIONS.some((o) => o.id === parsed.bottom);
+    const shoesValid = SHOES_SKIN_OPTIONS.some((o) => o.id === parsed.shoes);
     const bagValid = BAG_SKIN_OPTIONS.some((o) => o.id === parsed.bag);
     return {
       gender,
       top: topValid && parsed.top ? parsed.top : def.top,
-      bottom: def.bottom,
-      shoes: def.shoes,
+      bottom: bottomValid && parsed.bottom ? parsed.bottom : def.bottom,
+      shoes: shoesValid && parsed.shoes ? parsed.shoes : def.shoes,
       bag: bagValid && parsed.bag ? parsed.bag : def.bag,
     };
   } catch {
@@ -69,7 +75,7 @@ export function saveCharacterLoadoutPreference(loadout: CharacterLoadout): void 
 
 /**
  * Manages the graphics & character customization popover
- * (Gender selector, modular Top/Bag skin selectors, Outlines toggle, and /lab link).
+ * (Gender selector, modular Top/Bottom/Shoes/Bag skin selectors, Outlines toggle, and /lab link).
  */
 export class SettingsPanel {
   private readonly toggleBtn: HTMLElement | null;
@@ -77,6 +83,8 @@ export class SettingsPanel {
   private readonly outlinesBtn: HTMLElement | null;
   private readonly genderBtn: HTMLElement | null;
   private readonly topBtn: HTMLElement | null;
+  private readonly bottomBtn: HTMLElement | null;
+  private readonly shoesBtn: HTMLElement | null;
   private readonly bagBtn: HTMLElement | null;
   private outlinesEnabled: boolean;
   private loadout: CharacterLoadout;
@@ -87,6 +95,8 @@ export class SettingsPanel {
     this.outlinesBtn = document.getElementById("outlines-toggle");
     this.genderBtn = document.getElementById("gender-toggle");
     this.topBtn = document.getElementById("top-skin-toggle");
+    this.bottomBtn = document.getElementById("bottom-skin-toggle");
+    this.shoesBtn = document.getElementById("shoes-skin-toggle");
     this.bagBtn = document.getElementById("bag-skin-toggle");
 
     this.outlinesEnabled = loadOutlinesPreference();
@@ -97,6 +107,8 @@ export class SettingsPanel {
     this.outlinesBtn?.addEventListener("click", this.toggleOutlines);
     this.genderBtn?.addEventListener("click", this.cycleGender);
     this.topBtn?.addEventListener("click", this.cycleTopSkin);
+    this.bottomBtn?.addEventListener("click", this.cycleBottomSkin);
+    this.shoesBtn?.addEventListener("click", this.cycleShoesSkin);
     this.bagBtn?.addEventListener("click", this.cycleBagSkin);
   }
 
@@ -113,6 +125,8 @@ export class SettingsPanel {
     this.outlinesBtn?.removeEventListener("click", this.toggleOutlines);
     this.genderBtn?.removeEventListener("click", this.cycleGender);
     this.topBtn?.removeEventListener("click", this.cycleTopSkin);
+    this.bottomBtn?.removeEventListener("click", this.cycleBottomSkin);
+    this.shoesBtn?.removeEventListener("click", this.cycleShoesSkin);
     this.bagBtn?.removeEventListener("click", this.cycleBagSkin);
   }
 
@@ -138,6 +152,22 @@ export class SettingsPanel {
     const next = TOP_SKIN_OPTIONS[(idx + 1) % TOP_SKIN_OPTIONS.length];
     if (!next) return;
     this.loadout = { ...this.loadout, top: next.id as TopSkinId };
+    this.persistAndNotifyLoadout();
+  };
+
+  private readonly cycleBottomSkin = (): void => {
+    const idx = BOTTOM_SKIN_OPTIONS.findIndex((o) => o.id === this.loadout.bottom);
+    const next = BOTTOM_SKIN_OPTIONS[(idx + 1) % BOTTOM_SKIN_OPTIONS.length];
+    if (!next) return;
+    this.loadout = { ...this.loadout, bottom: next.id as BottomSkinId };
+    this.persistAndNotifyLoadout();
+  };
+
+  private readonly cycleShoesSkin = (): void => {
+    const idx = SHOES_SKIN_OPTIONS.findIndex((o) => o.id === this.loadout.shoes);
+    const next = SHOES_SKIN_OPTIONS[(idx + 1) % SHOES_SKIN_OPTIONS.length];
+    if (!next) return;
+    this.loadout = { ...this.loadout, shoes: next.id as ShoesSkinId };
     this.persistAndNotifyLoadout();
   };
 
@@ -167,6 +197,14 @@ export class SettingsPanel {
     if (this.topBtn) {
       const opt = TOP_SKIN_OPTIONS.find((o) => o.id === this.loadout.top);
       this.topBtn.textContent = `Top: ${opt?.label ?? this.loadout.top}`;
+    }
+    if (this.bottomBtn) {
+      const opt = BOTTOM_SKIN_OPTIONS.find((o) => o.id === this.loadout.bottom);
+      this.bottomBtn.textContent = `Bottom: ${opt?.label ?? this.loadout.bottom}`;
+    }
+    if (this.shoesBtn) {
+      const opt = SHOES_SKIN_OPTIONS.find((o) => o.id === this.loadout.shoes);
+      this.shoesBtn.textContent = `Shoes: ${opt?.label ?? this.loadout.shoes}`;
     }
     if (this.bagBtn) {
       const opt = BAG_SKIN_OPTIONS.find((o) => o.id === this.loadout.bag);

@@ -41,6 +41,8 @@ describe("modular character gender & slot configuration", () => {
     expect(male.top).toBe("orange-hoodie");
     expect(male.bag).toBe("red-backpack");
     expect(female.top).toBe("cyan-colorblock-tee");
+    expect(female.bottom).toBe("charcoal-shorts");
+    expect(female.shoes).toBe("white-strap-sneakers");
     expect(female.bag).toBe("yellow-crossbody");
     expect(getCharacterGlbPath("male")).toBe(ASSET_PATHS.MALE_CHARACTER_GLB);
     expect(getCharacterGlbPath("female")).toBe(ASSET_PATHS.FEMALE_CHARACTER_GLB);

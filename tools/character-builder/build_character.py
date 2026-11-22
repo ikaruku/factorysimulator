@@ -28,10 +28,16 @@ for extra_dir in (SCRIPT_DIR, PIPELINE_DIR):
 
 from bag_parts import build_bag_red_backpack, build_bag_yellow_crossbody  # noqa: E402
 from body_mesh import build_body_slot_mesh  # noqa: E402
-from bottom_parts import build_bottom_charcoal_joggers  # noqa: E402
+from bottom_parts import (  # noqa: E402
+    build_bottom_charcoal_joggers,
+    build_bottom_charcoal_shorts,
+)
 from hair_parts import build_hair_shaggy_male, build_hair_twin_buns_female  # noqa: E402
 from preview_render import render_turnaround_previews  # noqa: E402
-from shoe_parts import build_shoes_high_top_sneakers  # noqa: E402
+from shoe_parts import (  # noqa: E402
+    build_shoes_high_top_sneakers,
+    build_shoes_white_strap_sneakers,
+)
 from top_parts import build_top_cyan_colorblock_tee, build_top_orange_hoodie  # noqa: E402
 
 
@@ -59,14 +65,15 @@ def build_modular_character_slots(gender):
     if gender == "female":
         hair_mesh = build_hair_twin_buns_female()
         top_mesh = build_top_cyan_colorblock_tee()
+        bottom_mesh = build_bottom_charcoal_shorts()
+        shoes_mesh = build_shoes_white_strap_sneakers()
         bag_mesh = build_bag_yellow_crossbody()
     else:
         hair_mesh = build_hair_shaggy_male()
         top_mesh = build_top_orange_hoodie()
+        bottom_mesh = build_bottom_charcoal_joggers()
+        shoes_mesh = build_shoes_high_top_sneakers()
         bag_mesh = build_bag_red_backpack()
-
-    bottom_mesh = build_bottom_charcoal_joggers()
-    shoes_mesh = build_shoes_high_top_sneakers()
 
     slot_meshes = [body_mesh, hair_mesh, top_mesh, bottom_mesh, shoes_mesh, bag_mesh]
 

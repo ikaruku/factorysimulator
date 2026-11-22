@@ -30,21 +30,22 @@ def _build_skin_body_mesh(mat_skin):
         (0.0, 0.006, 1.245, 0.088, 0.068),  # 3: upper chest
         (0.0, 0.015, 1.320, 0.043, 0.044),  # 4: neck mid
         (0.0, 0.024, 1.400, 0.043, 0.044),  # 5: neck inside skull base
-        # Right arm chain (6..10) - fits cleanly inside long hoodie sleeves AND looks great in short sleeves!
+        # Right arm chain (6..10) - extends smoothly into palm center (z=0.730) so wrist has zero pinch groove!
         (0.135, -0.006, 1.225, 0.040, 0.040),  # 6: shoulder
         (0.172, -0.016, 1.105, 0.036, 0.036),  # 7: upper arm
         (0.192, -0.022, 0.985, 0.034, 0.034),  # 8: elbow
         (0.196, 0.012, 0.865, 0.031, 0.031),  # 9: forearm
-        (0.194, 0.044, 0.768, 0.026, 0.025),  # 10: wrist
-        # Right leg chain (11..18) - natural slender stance at x = 0.082
+        (0.196, 0.046, 0.732, 0.027, 0.024),  # 10: wrist extending seamlessly inside palm!
+        # Right leg chain (11..18) - natural slender stance at x = 0.081
         (0.078, 0.0, 0.765, 0.060, 0.060),  # 11: hip
-        (0.081, 0.004, 0.600, 0.054, 0.054),  # 12: thigh
-        (0.082, 0.006, 0.435, 0.045, 0.045),  # 13: knee
-        (0.082, -0.002, 0.275, 0.042, 0.043),  # 14: exposed bare lower calf (z=0.24..0.31)
-        (0.082, -0.002, 0.120, 0.036, 0.037),  # 15: ankle
-        (0.082, -0.018, 0.040, 0.035, 0.035),  # 16: heel
-        (0.084, 0.048, 0.040, 0.037, 0.035),  # 17: midfoot
-        (0.086, 0.108, 0.040, 0.034, 0.028),  # 18: toes
+        (0.080, 0.004, 0.600, 0.054, 0.054),  # 12: thigh
+        (0.081, 0.006, 0.450, 0.046, 0.047),  # 13: knee (sculpted for shorts!)
+        (0.081, -0.004, 0.355, 0.047, 0.049),  # 14: upper calf curve
+        (0.081, -0.002, 0.255, 0.041, 0.042),  # 15: lower calf entering sock
+        (0.081, -0.002, 0.120, 0.036, 0.037),  # 16: ankle
+        (0.081, -0.018, 0.040, 0.035, 0.035),  # 17: heel
+        (0.083, 0.048, 0.040, 0.037, 0.035),  # 18: midfoot
+        (0.085, 0.108, 0.040, 0.034, 0.028),  # 19: toes
     ]
 
     edges = [
@@ -64,8 +65,9 @@ def _build_skin_body_mesh(mat_skin):
         (13, 14),
         (14, 15),
         (15, 16),
-        (15, 17),
-        (17, 18),
+        (16, 17),
+        (16, 18),
+        (18, 19),
     ]
 
     bm = bmesh.new()
@@ -131,14 +133,17 @@ def _build_stylized_hands(mat_skin):
         for v in palm.data.vertices:
             if v.co.z < 0.0:
                 curl = abs(v.co.z) / 0.036
-                v.co.x -= side * 0.010 * (curl**1.3)
-                v.co.y *= 0.88
+                v.co.x -= side * 0.012 * (curl**1.3)
+                v.co.y *= 0.85
             else:
-                v.co.x *= 0.78
+                # Taper top of palm smoothly into the wrist cylinder radius (zero wrist bump!)
+                top_t = v.co.z / 0.036
+                v.co.x *= 0.72 * (1.0 - 0.18 * top_t)
+                v.co.y *= 1.0 - 0.16 * top_t
 
-        palm.scale = (0.72, 0.90, 1.48)
-        palm.rotation_euler = (0.14, side * 0.10, side * -0.15)
-        palm.location = (wx + side * 0.002, wy + 0.004, 0.724)
+        palm.scale = (0.72, 0.88, 1.54)
+        palm.rotation_euler = (0.14, side * 0.08, side * -0.12)
+        palm.location = (wx + side * 0.002, wy + 0.002, 0.722)
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         bpy.ops.object.shade_smooth()
         palm.data.materials.append(mat_skin)

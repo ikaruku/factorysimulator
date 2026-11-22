@@ -207,24 +207,28 @@ def _assign_shirt_uvs(shirt_obj, z_min=0.785, z_max=1.292):
 
 
 def build_top_cyan_colorblock_tee():
-    """Builds the default Female A-line oversized cyan/off-white color-blocked T-shirt as `TopMesh`."""
+    """
+    Builds the default Female A-line oversized cyan/off-white color-blocked T-shirt matching
+    Images 1 (Back), 2 (Front), 3 (Left), and 4 (Right) as `TopMesh`.
+    """
     mat_torso = create_colorblock_shirt_material()
     mat_cyan = make_toon_source_material("MatShirtCyan", 0x2FA6CC)
     mat_white = make_toon_source_material("MatShirtWhite", 0xE4E8E0)
     parts = []
 
-    # 1. Sculpted A-Line Oversized Tee Torso (z = 0.785 to 1.292)
+    # 1. Sculpted A-Line Oversized Tee Torso (z = 0.785 to 1.285)
+    # Flared back tail in Side views (Images 3 & 4) and wider relaxed crew neckline in Front (Image 2)
     torso_stations = [
-        (0.785, 0.145, 0.095, 0.102, 0.008, 0.000),
-        (0.792, 0.174, 0.124, 0.132, 0.008, 0.004),
-        (0.865, 0.166, 0.118, 0.122, 0.008, 0.006),
-        (0.955, 0.158, 0.112, 0.114, 0.007, 0.005),
-        (1.055, 0.150, 0.105, 0.106, 0.006, 0.003),
-        (1.155, 0.144, 0.098, 0.098, 0.005, 0.000),
-        (1.235, 0.136, 0.090, 0.092, 0.006, 0.000),
-        (1.275, 0.104, 0.076, 0.078, 0.008, 0.000),
-        (1.292, 0.064, 0.058, 0.060, 0.012, 0.000),
-        (1.275, 0.056, 0.052, 0.054, 0.012, 0.000),
+        (0.785, 0.145, 0.095, 0.106, 0.006, 0.000),
+        (0.792, 0.172, 0.122, 0.142, 0.004, 0.004),  # wide A-line bottom hem with flared back tail
+        (0.865, 0.164, 0.116, 0.132, 0.005, 0.006),
+        (0.955, 0.154, 0.110, 0.120, 0.006, 0.005),
+        (1.055, 0.145, 0.104, 0.110, 0.006, 0.003),
+        (1.155, 0.138, 0.096, 0.100, 0.005, 0.000),
+        (1.235, 0.130, 0.088, 0.092, 0.006, 0.000),
+        (1.268, 0.100, 0.074, 0.078, 0.008, 0.000),
+        (1.282, 0.068, 0.062, 0.062, 0.012, 0.000),  # relaxed crew neckline
+        (1.268, 0.058, 0.054, 0.054, 0.012, 0.000),
     ]
     n_seg = 36
     torso_rings = []
@@ -242,17 +246,18 @@ def build_top_cyan_colorblock_tee():
         torso_rings.append(ring)
 
     torso_obj = make_loft_from_rings("TeeTorso", torso_rings, mat_torso, cap_start=True)
-    _assign_shirt_uvs(torso_obj, z_min=0.785, z_max=1.292)
+    _assign_shirt_uvs(torso_obj, z_min=0.785, z_max=1.282)
     parts.append(torso_obj)
 
-    # 2. Wide Straight-Cut Flared Short Sleeves (Right = Cyan, Left = Off-White)
+    # 2. Natural Drop-Shoulder Straight-Flared Short Sleeves (Images 1, 2, 3, 4!)
+    # Kept close to the torso (`outer x ~ +-0.228`, NOT wide conical wings!)
     slv_stations = [
-        (0.096, -0.002, 1.246, 0.054, 0.056),
-        (0.136, -0.008, 1.218, 0.062, 0.064),
-        (0.164, -0.014, 1.152, 0.068, 0.072),
-        (0.188, -0.018, 1.078, 0.076, 0.080),
-        (0.208, -0.020, 1.008, 0.084, 0.088),
-        (0.204, -0.020, 1.012, 0.068, 0.070),
+        (0.080, -0.002, 1.258, 0.056, 0.058),
+        (0.122, -0.006, 1.228, 0.060, 0.062),
+        (0.148, -0.010, 1.158, 0.062, 0.065),
+        (0.165, -0.014, 1.082, 0.064, 0.067),
+        (0.176, -0.016, 1.015, 0.066, 0.069),  # crisp short-sleeve cuff opening at elbow top
+        (0.174, -0.016, 1.020, 0.050, 0.052),
     ]
     n_sseg = 24
     for side, s_mat in ((1.0, mat_cyan), (-1.0, mat_white)):

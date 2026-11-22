@@ -101,42 +101,44 @@ def build_bag_red_backpack():
 
 def build_bag_yellow_crossbody():
     """
-    Builds the default Female golden-yellow crossbody sling bag (#E9A82B) as `BagMesh`.
-    Uses an explicit lofted elliptical quad-tube whose two ends terminate cleanly inside the
-    front-left hip pouch so there is ZERO cyclic NURBS seam or black hatching!
+    Builds the default Female golden-yellow crossbody sling bag (#E5A530) matching
+    Images 1 (Back), 2 (Front), 3 (Left), and 4 (Right) as `BagMesh`:
+    - Prominent right-shoulder strap loop cap (+X) visible in Front, Back, and Right views
+    - Diagonal front strap across chest into the top-front of the front-left hip pouch (Image 2)
+    - Back strap sweeping from upper-right shoulder across upper back to the left mid-ribcage
+      under the white sleeve cuff, then dropping vertically down the left side into the pouch
+      (Images 1 & 3!)
+    - Prominent rounded rectangular/trapezoidal yellow pouch sitting in front of the left arm
+      at the front-left hip (Images 2, 3, 4).
     """
-    mat_bag = make_toon_source_material("MatYellowBag", 0xE9A82B)
+    mat_bag = make_toon_source_material("MatYellowBag", 0xE5A530)
     parts = []
 
-    # Non-cyclic path starting inside front-top of pouch -> across front chest -> over right
-    # shoulder -> diagonally down back -> wrapping left waist -> ending inside back of pouch!
     strap_waypoints = [
-        (-0.160, 0.108, 0.785),  # anchored inside front-top of pouch
-        (-0.146, 0.126, 0.855),  # front-left waist above pouch
-        (-0.086, 0.132, 0.955),  # lower front chest
-        (-0.018, 0.128, 1.065),  # mid front chest
-        (0.046, 0.116, 1.162),  # upper front chest
-        (0.092, 0.088, 1.236),  # right collarbone (hugs tee collar snugly!)
-        (0.112, 0.032, 1.260),  # front-top right shoulder (zero air gap!)
-        (0.114, -0.025, 1.262),  # back-top right shoulder crest
-        (0.092, -0.084, 1.232),  # upper back right
-        (0.030, -0.114, 1.150),  # upper-mid back
-        (-0.042, -0.122, 1.045),  # mid back
-        (-0.114, -0.122, 0.935),  # lower back left
-        (-0.156, -0.068, 0.842),  # left hip wrap behind pouch (snug against tee!)
-        (-0.172, 0.015, 0.788),  # outer-back edge of pouch
-        (-0.168, 0.072, 0.765),  # anchored inside back of pouch
+        (-0.148, 0.118, 0.825),  # anchored inside top-front of pouch
+        (-0.132, 0.130, 0.885),  # front-left waist above pouch (Image 2)
+        (-0.072, 0.130, 0.978),  # lower front chest
+        (-0.008, 0.124, 1.078),  # mid front chest
+        (0.052, 0.112, 1.172),  # upper front chest
+        (0.096, 0.084, 1.240),  # right collarbone
+        (0.114, 0.028, 1.258),  # smooth rounded right-shoulder loop front (Images 2 & 4!)
+        (0.116, -0.028, 1.258),  # smooth rounded right-shoulder loop back (Images 1 & 4!)
+        (0.074, -0.098, 1.228),  # upper back right (Image 1)
+        (-0.015, -0.120, 1.155),  # upper-mid back diagonal (Image 1)
+        (-0.106, -0.126, 1.068),  # emerging under left white sleeve cuff on back (Image 1!)
+        (-0.156, -0.116, 0.985),  # left mid-ribcage corner (Images 1 & 3!)
+        (-0.168, -0.070, 0.895),  # vertical drop down left side behind pouch (Images 1 & 3!)
+        (-0.164, 0.012, 0.835),  # entering top-back corner of pouch (Images 2 & 3!)
+        (-0.156, 0.068, 0.795),  # anchored inside back of pouch
     ]
 
     n_seg = 12
-    rx, ry = 0.017, 0.009
+    rx, ry = 0.018, 0.010
     st_rings = []
     for i, (cx, cy, cz) in enumerate(strap_waypoints):
-        # Compute local outward surface normal roughly pointing away from torso axis (0, 0, cz)
         nx, ny = cx, cy
         n_len = max(1e-6, math.sqrt(nx * nx + ny * ny))
         nx, ny = nx / n_len, ny / n_len
-        # Tangent vector along strap
         if i == 0:
             tx = strap_waypoints[1][0] - cx
             ty = strap_waypoints[1][1] - cy
@@ -148,9 +150,8 @@ def build_bag_yellow_crossbody():
         t_len = max(1e-6, math.sqrt(tx * tx + ty * ty + tz * tz))
         tx, ty, tz = tx / t_len, ty / t_len, tz / t_len
 
-        # Binormal = tangent x normal (lies flat along torso surface)
-        bx = ty * 0.0 - tz * ny
-        by = tz * nx - tx * 0.0
+        bx = -tz * ny
+        by = tz * nx
         bz = tx * ny - ty * nx
         b_len = max(1e-6, math.sqrt(bx * bx + by * by + bz * bz))
         bx, by, bz = bx / b_len, by / b_len, bz / b_len
@@ -175,8 +176,8 @@ def build_bag_yellow_crossbody():
         )
     )
 
-    # Prominent rounded pear/trapezoid pouch at front-left hip
-    bpy.ops.mesh.primitive_cube_add(size=0.185, location=(0.0, 0.0, 0.0))
+    # Prominent rounded rectangular/trapezoidal pouch sitting in front of the left arm (Images 2, 3, 4!)
+    bpy.ops.mesh.primitive_cube_add(size=0.180, location=(0.0, 0.0, 0.0))
     pouch = bpy.context.active_object
     pouch.name = "CrossbodyPouch"
     sub = pouch.modifiers.new("Subsurf", "SUBSURF")
@@ -185,14 +186,14 @@ def build_bag_yellow_crossbody():
     bpy.ops.object.modifier_apply(modifier="Subsurf")
 
     for v in pouch.data.vertices:
-        z_t = (v.co.z + 0.0925) / 0.185
-        v.co.x *= 0.54 * (1.10 - 0.24 * z_t)
-        v.co.y *= 1.00 * (1.14 - 0.26 * z_t)
-        v.co.z *= 1.20
+        z_t = (v.co.z + 0.090) / 0.180
+        v.co.x *= 0.56 * (1.10 - 0.22 * z_t)
+        v.co.y *= 1.05 * (1.12 - 0.22 * z_t)
+        v.co.z *= 1.24
     pouch.data.update()
 
-    pouch.rotation_euler = (0.06, -0.10, 0.42)
-    pouch.location = (-0.168, 0.092, 0.742)
+    pouch.rotation_euler = (0.05, -0.08, 0.36)
+    pouch.location = (-0.158, 0.102, 0.772)
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     bpy.ops.object.shade_smooth()
     pouch.data.materials.append(mat_bag)
