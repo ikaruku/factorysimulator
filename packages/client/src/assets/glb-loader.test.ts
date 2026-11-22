@@ -7,7 +7,11 @@ import {
   VISUAL_CONFIG,
   getDefaultLoadoutForGender,
 } from "@factory-simulator/shared";
-import { getCharacterGlbPath, selectAnimationClipName } from "../entities/character-avatar";
+import {
+  computeAnimationTimeScale,
+  getCharacterGlbPath,
+  selectAnimationClipName,
+} from "../entities/character-avatar";
 import { convertMaterialToToon } from "./glb-loader";
 
 describe("convertMaterialToToon", () => {
@@ -29,6 +33,19 @@ describe("selectAnimationClipName", () => {
 
   it("falls back cleanly to Idle when only Idle exists in early pipeline gates", () => {
     expect(selectAnimationClipName(1.2, true, ["Idle"])).toBe("Idle");
+  });
+
+  it("ignores rig verification PoseTest clip during gameplay selection", () => {
+    expect(selectAnimationClipName(0, false, ["PoseTest", "Idle"])).toBe("Idle");
+    expect(selectAnimationClipName(1.2, true, ["PoseTest", "Idle"])).toBe("Idle");
+  });
+
+  it("normalizes playback speed for Walk, Run, Idle, and forced /lab previews", () => {
+    expect(computeAnimationTimeScale("Idle", 0, false)).toBe(1);
+    expect(computeAnimationTimeScale("Walk", 1.0, false)).toBe(1);
+    expect(computeAnimationTimeScale("Run", 1.75, false)).toBe(1);
+    expect(computeAnimationTimeScale("Run", 0, true)).toBe(1);
+    expect(computeAnimationTimeScale("Walk", 0, true)).toBe(1);
   });
 });
 

@@ -9,6 +9,7 @@ Modular `BottomMesh` (Pakaian Bawah) slot builders for Male & Female Abeto chara
 
 import math
 from mesh_utils import join_parts_into_slot_mesh, make_loft_from_rings, make_toon_source_material
+from rig_builder import assign_part_weights
 
 
 def _build_crew_socks(parts, mat_socks, x_offset=0.082):
@@ -87,6 +88,15 @@ def build_bottom_charcoal_joggers():
         )
 
     _build_crew_socks(parts, mat_socks, x_offset=0.082)
+    for part in parts:
+        if part.name == "JoggerLeg_L":
+            assign_part_weights(part, "leg_L")
+        elif part.name == "JoggerLeg_R":
+            assign_part_weights(part, "leg_R")
+        elif part.name == "CrewSock_L":
+            assign_part_weights(part, "sock_L")
+        else:
+            assign_part_weights(part, "sock_R")
     return join_parts_into_slot_mesh(parts, "BottomMesh")
 
 
@@ -137,4 +147,13 @@ def build_bottom_charcoal_shorts():
         )
 
     _build_crew_socks(parts, mat_socks, x_offset=0.080)
+    for part in parts:
+        if part.name == "ShortsLeg_L":
+            assign_part_weights(part, "leg_L")
+        elif part.name == "ShortsLeg_R":
+            assign_part_weights(part, "leg_R")
+        elif part.name == "CrewSock_L":
+            assign_part_weights(part, "sock_L")
+        else:
+            assign_part_weights(part, "sock_R")
     return join_parts_into_slot_mesh(parts, "BottomMesh")

@@ -95,6 +95,9 @@ function buildLabMarkup(initialLoadout: CharacterLoadout): string {
           <button id="lab-gender-female" class="hud-button" type="button">
             Female (Default)
           </button>
+          <button id="lab-anim-btn" class="hud-button" type="button" aria-pressed="false">
+            Anim: Idle
+          </button>
           <button id="lab-outline-btn" class="hud-button" type="button">Outlines: ON</button>
           <label class="hud-pill lab-slider-label">
             Thickness
@@ -157,6 +160,7 @@ function populateLabScene(
 ): {
   update: (dt: number) => void;
   setLoadout: (loadout: CharacterLoadout) => void;
+  setForcedClip: (clipName: string | null) => void;
 } {
   scene.background = new THREE.Color(ABETO_PALETTE.SKY_HORIZON);
   const sky = createProceduralSky(160);
@@ -248,6 +252,11 @@ function populateLabScene(
     setLoadout: (loadout: CharacterLoadout) => {
       for (const char of characters) {
         void char.setLoadout(loadout);
+      }
+    },
+    setForcedClip: (clipName: string | null) => {
+      for (const char of characters) {
+        char.setForcedClipName(clipName);
       }
     },
   };
@@ -359,6 +368,17 @@ export function startLabPage(): void {
     const next = !composer.isOutlinesEnabled();
     composer.setOutlinesEnabled(next);
     outlineBtn.textContent = next ? "Outlines: ON" : "Outlines: OFF";
+  });
+
+  const animOrder: readonly ("Idle" | "Walk" | "Run")[] = ["Idle", "Walk", "Run"];
+  let animIndex = 0;
+  const animBtn = document.getElementById("lab-anim-btn");
+  animBtn?.addEventListener("click", () => {
+    animIndex = (animIndex + 1) % animOrder.length;
+    const nextAnim = animOrder[animIndex] ?? "Idle";
+    animBtn.setAttribute("aria-pressed", String(nextAnim !== "Idle"));
+    animBtn.textContent = `Anim: ${nextAnim}`;
+    content.setForcedClip(nextAnim === "Idle" ? null : nextAnim);
   });
 
   const slider = document.getElementById("lab-thickness") as HTMLInputElement | null;

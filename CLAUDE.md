@@ -8,7 +8,7 @@ Top reference: `docs/game-plan.md`. If anything conflicts with it, that document
 - **Character & Outfit Modularity Standard (Mandatory):**
   - Default outline thickness is `1.0px` (`VISUAL_CONFIG.OUTLINE_THICKNESS_PX = 1.0`), paired with 2-tone Abeto cel shading (`TOON_LEVELS = 2`).
   - Characters support gender selection (`male` and `female`) with 2 canonical default designs:
-    - `male` (default skin): shaggy slate-teal hair, oversized orange pullover hoodie with folded hood & grey drawstrings, crimson-red `"Hi"` backpack, cropped charcoal joggers, white crew socks, chunky high-top dark sneakers (`content/characters/male/character.glb` & `content/characters/default/character.glb`).
+    - `male` (default skin): shaggy slate-teal hair, oversized orange pullover hoodie with folded hood & grey drawstrings, Nike Heritage coral-red backpack (`red-backpack`, `"Nike Red Backpack"`), cropped charcoal joggers, white crew socks, chunky high-top dark sneakers (`content/characters/male/character.glb` & `content/characters/default/character.glb`).
     - `female` (default skin): dark bob hair with twin buns & yellow ties, A-line cyan/off-white color-blocked T-shirt, golden-yellow crossbody sling bag, charcoal shorts (`celana pendek`), white crew socks, chunky off-white high-top strap sneakers (`content/characters/female/character.glb`).
   - Every character `.glb` and builder script MUST keep the 6 modular mesh slots separated (`BodyMesh`, `HairMesh`, `TopMesh` [pakaian atas], `BottomMesh` [pakaian bawah], `ShoesMesh` [sepatu], `BagMesh` [tas]) bound to the shared `CharacterRig` skeleton so outfit parts can always be swapped or extended with new skins independently.
 - `client` and `server` may only import from `shared`, never from each other.

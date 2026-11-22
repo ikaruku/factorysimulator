@@ -13,6 +13,7 @@ import math
 import bmesh
 import bpy
 from mesh_utils import join_parts_into_slot_mesh, make_toon_source_material
+from rig_builder import assign_part_weights
 from textures import create_face_material
 
 
@@ -42,10 +43,10 @@ def _build_skin_body_mesh(mat_skin):
         (0.081, 0.006, 0.450, 0.046, 0.047),  # 13: knee (sculpted for shorts!)
         (0.081, -0.004, 0.355, 0.047, 0.049),  # 14: upper calf curve
         (0.081, -0.002, 0.255, 0.041, 0.042),  # 15: lower calf entering sock
-        (0.081, -0.002, 0.120, 0.036, 0.037),  # 16: ankle
-        (0.081, -0.018, 0.040, 0.035, 0.035),  # 17: heel
-        (0.083, 0.048, 0.040, 0.037, 0.035),  # 18: midfoot
-        (0.085, 0.108, 0.040, 0.034, 0.028),  # 19: toes
+        (0.081, -0.002, 0.125, 0.032, 0.033),  # 16: ankle (inside sock/shoe collar)
+        (0.081, -0.012, 0.078, 0.022, 0.022),  # 17: heel core (safely inside shoe!)
+        (0.083, 0.038, 0.078, 0.022, 0.020),  # 18: midfoot core (safely inside shoe!)
+        (0.085, 0.076, 0.078, 0.018, 0.016),  # 19: toe core (safely inside shoe!)
     ]
 
     edges = [
@@ -101,12 +102,6 @@ def _build_skin_body_mesh(mat_skin):
 
     for mod_name in ("Mirror", "Skin", "Subsurf"):
         bpy.ops.object.modifier_apply(modifier=mod_name)
-
-    min_z = min(v.co.z for v in obj.data.vertices)
-    for v in obj.data.vertices:
-        v.co.z -= min_z
-        if v.co.z < 0.016:
-            v.co.z = 0.0
 
     obj.data.update()
     bpy.ops.object.shade_smooth()
@@ -278,11 +273,19 @@ def _build_stylized_head(mat_skin, mat_face):
 
 
 def build_body_slot_mesh(gender="male"):
-    """Builds and returns the unified `BodyMesh` slot object for the given gender."""
+    """Builds and returns the unified `BodyMesh` slot object with K4 humanoid skin weights."""
     mat_skin = make_toon_source_material("MatHumanSkin", 0xCFB6BA)
     mat_face = create_face_material(gender=gender)
 
     body = _build_skin_body_mesh(mat_skin)
+    assign_part_weights(body, "body_skin")
+
     hands = _build_stylized_hands(mat_skin)
+    for h_obj in hands:
+        role = "hand_L" if h_obj.name.endswith("_L") else "hand_R"
+        assign_part_weights(h_obj, role)
+
     head = _build_stylized_head(mat_skin, mat_face)
+    assign_part_weights(head, "head")
+
     return join_parts_into_slot_mesh([body, *hands, head], "BodyMesh")

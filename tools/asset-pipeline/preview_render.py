@@ -68,3 +68,36 @@ def render_turnaround_previews(preview_dir, target_z=0.86, distance=2.65, resolu
     bpy.data.objects.remove(cam_obj, do_unlink=True)
     bpy.data.cameras.remove(cam_data)
     return rendered
+
+
+def render_pose_check_previews(
+    preview_dir, target_z=0.84, distance=2.75, resolution=512, prefix="pose_stride"
+):
+    """Renders 3/4 and right-side views of the current posed frame for rig/animation verification."""
+    os.makedirs(preview_dir, exist_ok=True)
+    scene = bpy.context.scene
+    cam_data = bpy.data.cameras.new("PosePreviewCam")
+    cam_data.lens = 50
+    cam_obj = bpy.data.objects.new("PosePreviewCam", cam_data)
+    scene.collection.objects.link(cam_obj)
+    scene.camera = cam_obj
+
+    views = {
+        f"{prefix}_3q": (
+            (distance * 0.68, distance * 0.74, target_z + 0.08),
+            (0.0, 0.0, target_z),
+        ),
+        f"{prefix}_side": ((distance, 0.0, target_z + 0.06), (0.0, 0.0, target_z)),
+    }
+    rendered = []
+    for name, (loc, tgt) in views.items():
+        cam_obj.location = Vector(loc)
+        _point_camera_at(cam_obj, Vector(tgt))
+        out_path = os.path.join(preview_dir, f"{name}.png")
+        scene.render.filepath = out_path
+        bpy.ops.render.render(write_still=True)
+        rendered.append(out_path)
+
+    bpy.data.objects.remove(cam_obj, do_unlink=True)
+    bpy.data.cameras.remove(cam_data)
+    return rendered

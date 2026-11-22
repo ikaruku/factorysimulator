@@ -5,6 +5,7 @@ import {
   BOTTOM_SKIN_OPTIONS,
   CHARACTER_MESH_SLOTS,
   DEFAULT_CHARACTER_LOADOUTS,
+  MOVEMENT_CONFIG,
   SHOES_SKIN_OPTIONS,
   TOP_SKIN_OPTIONS,
   getDefaultLoadoutForGender,
@@ -15,23 +16,68 @@ import { loadToonGlb } from "../assets/glb-loader";
 
 export type CharacterAnimState = "Idle" | "Walk" | "Run";
 
-/** Selects the best available skeletal clip name for the current movement state. */
+const RUN_TO_WALK_SPEED_RATIO = MOVEMENT_CONFIG.RUN_SPEED_MPS / MOVEMENT_CONFIG.WALK_SPEED_MPS;
+
+/** Selects the best available skeletal gameplay clip name for the current movement state. */
 export function selectAnimationClipName(
   speedRatio: number,
   isRunning: boolean,
   availableNames: readonly string[],
 ): string | null {
+  const gameplayClips = availableNames.filter((name) => name !== "PoseTest");
   const desired: CharacterAnimState = speedRatio <= 0.05 ? "Idle" : isRunning ? "Run" : "Walk";
 
-  if (availableNames.includes(desired)) return desired;
-  if (desired === "Run" && availableNames.includes("Walk")) return "Walk";
-  if (availableNames.includes("Idle")) return "Idle";
-  return availableNames[0] ?? null;
+  if (gameplayClips.includes(desired)) return desired;
+  if (desired === "Run" && gameplayClips.includes("Walk")) return "Walk";
+  if (gameplayClips.includes("Idle")) return "Idle";
+  return gameplayClips[0] ?? availableNames[0] ?? null;
+}
+
+/**
+ * Computes the AnimationAction playback speed scale so Walk matches walk speed, Run plays
+ * at its authored cadence at full sprint (7 m/s), and forced /lab preview clips play at 1.0x.
+ */
+export function computeAnimationTimeScale(
+  clipName: string | null,
+  speedRatio: number,
+  isForced: boolean,
+): number {
+  if (isForced || !clipName || clipName === "Idle") return 1;
+  if (clipName === "Run") {
+    return THREE.MathUtils.clamp(speedRatio / RUN_TO_WALK_SPEED_RATIO, 0.8, 1.25);
+  }
+  if (clipName === "Walk") {
+    return THREE.MathUtils.clamp(speedRatio, 0.65, 1.35);
+  }
+  return 1;
 }
 
 /** Resolves the GLB asset path for a given character gender preset. */
 export function getCharacterGlbPath(gender: CharacterGender): string {
   return gender === "female" ? ASSET_PATHS.FEMALE_CHARACTER_GLB : ASSET_PATHS.MALE_CHARACTER_GLB;
+}
+
+/**
+ * Rebinds a donor `SkinnedMesh` onto the live bone hierarchy of `baseScene` by matching
+ * every bone's canonical name (immune to glTF bone-subset or bone-index ordering differences).
+ */
+export function rebindSkinnedMeshByBoneName(
+  donorMesh: THREE.SkinnedMesh,
+  baseScene: THREE.Object3D,
+): void {
+  const baseBoneByName = new Map<string, THREE.Bone>();
+  baseScene.traverse((node) => {
+    if (node instanceof THREE.Bone) {
+      baseBoneByName.set(node.name, node);
+    }
+  });
+
+  const remappedBones = donorMesh.skeleton.bones.map(
+    (bone) => baseBoneByName.get(bone.name) ?? bone,
+  );
+  const clonedInverses = donorMesh.skeleton.boneInverses.map((mat) => mat.clone());
+  const nextSkeleton = new THREE.Skeleton(remappedBones, clonedInverses);
+  donorMesh.bind(nextSkeleton, donorMesh.bindMatrix);
 }
 
 const SLOT_NODE_BY_KEY = {
@@ -43,8 +89,9 @@ const SLOT_NODE_BY_KEY = {
 
 /**
  * Loads and animates a modular rigged glTF/GLB character from content/characters/.
- * Supports switching gender presets (Male / Female) and independently swapping
- * modular outfit slots (`TopMesh`, `BottomMesh`, `ShoesMesh`, `BagMesh`).
+ * Supports switching gender presets (Male / Female), independently swapping modular outfit
+ * slots (`TopMesh`, `BottomMesh`, `ShoesMesh`, `BagMesh`) via bone-name skeleton rebinding,
+ * and forcing preview clips (e.g. `PoseTest`) in `/lab`.
  */
 export class CharacterAvatar {
   readonly group = new THREE.Group();
@@ -52,6 +99,7 @@ export class CharacterAvatar {
   private mixer: THREE.AnimationMixer | null = null;
   private readonly actions = new Map<string, THREE.AnimationAction>();
   private activeClipName: string | null = null;
+  private forcedClipName: string | null = null;
   private fallbackTime = 0;
   private loaded = false;
   private loadout: CharacterLoadout;
@@ -80,6 +128,14 @@ export class CharacterAvatar {
     return { ...this.loadout };
   }
 
+  /** Forces a specific clip name (e.g. `"PoseTest"` in `/lab`), or `null` for automatic gameplay selection. */
+  setForcedClipName(clipName: string | null): void {
+    this.forcedClipName = clipName;
+    if (clipName && this.actions.has(clipName) && clipName !== this.activeClipName) {
+      this.transitionTo(clipName);
+    }
+  }
+
   /** Switches to the default design for the selected gender ('male' or 'female'). */
   async setGender(gender: CharacterGender): Promise<void> {
     await this.setLoadout(getDefaultLoadoutForGender(gender));
@@ -93,17 +149,16 @@ export class CharacterAvatar {
 
   updateAnimation(speedRatio: number, isRunning: boolean, dt: number): void {
     if (this.mixer) {
-      const clipName = selectAnimationClipName(
-        speedRatio,
-        isRunning,
-        Array.from(this.actions.keys()),
-      );
+      const available = Array.from(this.actions.keys());
+      const isForced = Boolean(this.forcedClipName && this.actions.has(this.forcedClipName));
+      const clipName = isForced
+        ? this.forcedClipName
+        : selectAnimationClipName(speedRatio, isRunning, available);
       if (clipName && clipName !== this.activeClipName) {
         this.transitionTo(clipName);
       }
 
-      const playbackRate =
-        clipName === "Walk" || clipName === "Run" ? THREE.MathUtils.clamp(speedRatio, 0.6, 1.5) : 1;
+      const playbackRate = computeAnimationTimeScale(this.activeClipName, speedRatio, isForced);
       const activeAction = this.activeClipName ? this.actions.get(this.activeClipName) : null;
       if (activeAction) {
         activeAction.setEffectiveTimeScale(playbackRate);
@@ -111,7 +166,7 @@ export class CharacterAvatar {
       this.mixer.update(dt);
 
       const hasMoveClip = this.actions.has("Walk") || this.actions.has("Run");
-      if (!hasMoveClip && speedRatio > 0.05) {
+      if (!this.forcedClipName && !hasMoveClip && speedRatio > 0.05) {
         this.fallbackTime += dt * (isRunning ? 13 : 9);
         this.visualRoot.position.y =
           Math.abs(Math.sin(this.fallbackTime)) * (isRunning ? 0.06 : 0.03);
@@ -141,7 +196,11 @@ export class CharacterAvatar {
         for (const clip of animations) {
           this.actions.set(clip.name, this.mixer.clipAction(clip));
         }
-        const initial = selectAnimationClipName(0, false, Array.from(this.actions.keys()));
+        const available = Array.from(this.actions.keys());
+        const initial =
+          this.forcedClipName && this.actions.has(this.forcedClipName)
+            ? this.forcedClipName
+            : selectAnimationClipName(0, false, available);
         if (initial) {
           const action = this.actions.get(initial);
           action?.reset().play();
@@ -174,8 +233,6 @@ export class CharacterAvatar {
       ? (await loadToonGlb(getCharacterGlbPath(oppositeGender))).scene
       : null;
 
-    const baseSkinned = this.findFirstSkinnedMesh(baseScene);
-
     for (const slotKey of ["top", "bottom", "shoes", "bag"] as const) {
       const nodeName = SLOT_NODE_BY_KEY[slotKey];
       const existingNode = baseScene.getObjectByName(nodeName);
@@ -199,25 +256,13 @@ export class CharacterAvatar {
       donorNode.parent?.remove(donorNode);
       donorNode.visible = true;
 
-      if (baseSkinned) {
-        donorNode.traverse((child) => {
-          if (child instanceof THREE.SkinnedMesh) {
-            child.bind(baseSkinned.skeleton, baseSkinned.bindMatrix);
-          }
-        });
-      }
+      donorNode.traverse((child) => {
+        if (child instanceof THREE.SkinnedMesh) {
+          rebindSkinnedMeshByBoneName(child, baseScene);
+        }
+      });
       parent.add(donorNode);
     }
-  }
-
-  private findFirstSkinnedMesh(root: THREE.Object3D): THREE.SkinnedMesh | null {
-    let found: THREE.SkinnedMesh | null = null;
-    root.traverse((node) => {
-      if (!found && node instanceof THREE.SkinnedMesh) {
-        found = node;
-      }
-    });
-    return found;
   }
 
   private transitionTo(nextClip: string): void {

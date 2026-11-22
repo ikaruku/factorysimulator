@@ -11,6 +11,7 @@ Modular `TopMesh` (Pakaian Atas) slot builders for Male & Female Abeto character
 import math
 import bpy
 from mesh_utils import join_parts_into_slot_mesh, make_loft_from_rings, make_toon_source_material
+from rig_builder import assign_part_weights
 from textures import create_colorblock_shirt_material
 
 
@@ -182,6 +183,15 @@ def build_top_orange_hoodie():
             )
         )
 
+    for part in parts:
+        if part.name in ("HoodieSleeve_L", "TeeSleeve_L"):
+            assign_part_weights(part, "sleeve_L")
+        elif part.name in ("HoodieSleeve_R", "TeeSleeve_R"):
+            assign_part_weights(part, "sleeve_R")
+        elif part.name == "HoodieHood":
+            assign_part_weights(part, "hood")
+        else:
+            assign_part_weights(part, "torso")
     return join_parts_into_slot_mesh(parts, "TopMesh")
 
 
@@ -278,4 +288,13 @@ def build_top_cyan_colorblock_tee():
             )
         )
 
+    for part in parts:
+        if part.name in ("HoodieSleeve_L", "TeeSleeve_L"):
+            assign_part_weights(part, "sleeve_L")
+        elif part.name in ("HoodieSleeve_R", "TeeSleeve_R"):
+            assign_part_weights(part, "sleeve_R")
+        elif part.name == "HoodieHood":
+            assign_part_weights(part, "hood")
+        else:
+            assign_part_weights(part, "torso")
     return join_parts_into_slot_mesh(parts, "TopMesh")

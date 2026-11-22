@@ -1,9 +1,10 @@
 """
 Modular `BagMesh` (Tas) slot builders for Male & Female Abeto characters:
-- `build_bag_red_backpack()`: Default Male crimson-red backpack (#A83A3E) with chamfered
-  bottom-back corner, bold 3D off-white "Hi" + two horizontal bars graphic logo (#DCE0D8),
-  and thick padded red shoulder straps.
-- `build_bag_yellow_crossbody()`: Default Female golden-yellow crossbody sling bag (#E9A82B)
+- `build_bag_red_backpack()`: Default Male Nike Heritage Coral-Red Backpack (#D24442) with
+  arch-top dome silhouette, crisp 1024x1024 white "NIKE" + Swoosh logo, 3D raised zipper welt,
+  3D protruding lower front box pocket with overhanging zipper flap hood and vertical pull tab,
+  3D top webbing haul loop handle, and curved padded red shoulder straps.
+- `build_bag_yellow_crossbody()`: Default Female golden-yellow crossbody sling bag (#E5A530)
   with smooth non-cyclic lofted elliptical strap (zero normal-crease hatching!) and prominent
   front-left rounded trapezoidal hip pouch.
 """
@@ -16,25 +17,88 @@ from mesh_utils import (
     make_loft_from_rings,
     make_toon_source_material,
 )
+from rig_builder import assign_part_weights
+from textures import (
+    create_nike_backpack_logo_material,
+    create_nike_backpack_side_material,
+)
+
+
+def _assign_backpack_uvs(pack_obj, mat_red, mat_logo, mat_side):
+    """
+    Maps `BackpackBody` cleanly to 3 material slots:
+      - slot 0 (`mat_red`): base/front/bottom faces
+      - slot 1 (`mat_logo`): upper rear dome arch panel (1024x1024 Linear-filtered NIKE + Swoosh)
+      - slot 2 (`mat_side`): left/right side walls (clean painted zipper & side-pocket seams,
+        zero intersecting thin tubes so the outline pass stays 100% crisp without speckles).
+    """
+    mesh = pack_obj.data
+    mesh.materials.clear()
+    mesh.materials.append(mat_red)  # slot 0
+    mesh.materials.append(mat_logo)  # slot 1
+    mesh.materials.append(mat_side)  # slot 2
+
+    uv_layer = mesh.uv_layers.active or mesh.uv_layers.new(name="UVMap")
+    uv_layer.name = "UVMap"
+
+    for poly in mesh.polygons:
+        c = poly.center
+        n = poly.normal
+        # Rear upper dome face above the lower front pocket
+        is_logo_panel = n.y < -0.55 and 1.008 < c.z < 1.242 and abs(c.x) < 0.132
+        # Left/right side panels (y in [-0.228, -0.090], z in [0.855, 1.245])
+        is_side_panel = abs(n.x) > 0.55 and 0.865 < c.z < 1.235
+
+        if is_logo_panel:
+            poly.material_index = 1
+            for loop_idx in poly.loop_indices:
+                v = mesh.vertices[mesh.loops[loop_idx].vertex_index].co
+                # Back view (-Y looking to +Y): -X is viewer LEFT (u=0), +X is viewer RIGHT (u=1)
+                u = max(0.01, min(0.99, 0.5 + v.x / 0.285))
+                nv = max(0.01, min(0.99, (v.z - 1.012) / 0.222))
+                uv_layer.data[loop_idx].uv = (u, nv)
+        elif is_side_panel:
+            poly.material_index = 2
+            for loop_idx in poly.loop_indices:
+                v = mesh.vertices[mesh.loops[loop_idx].vertex_index].co
+                # u=0 against character back (y=-0.090), u=1 at rear face (y=-0.228)
+                u = max(0.01, min(0.99, (-0.090 - v.y) / 0.138))
+                nv = max(0.01, min(0.99, (v.z - 0.858) / 0.395))
+                uv_layer.data[loop_idx].uv = (u, nv)
+        else:
+            poly.material_index = 0
+            for loop_idx in poly.loop_indices:
+                uv_layer.data[loop_idx].uv = (0.02, 0.02)
 
 
 def build_bag_red_backpack():
-    """Builds the default Male crimson-red backpack + straps + 3D "Hi" logo as `BagMesh`."""
-    mat_red = make_toon_source_material("MatBackpackRed", 0xA83A3E)
-    mat_logo = make_toon_source_material("MatBackpackLogo", 0xDCE0D8)
+    """
+    Builds the sleek Nike Heritage Coral-Red Backpack (`media_1795350199916_e293d8c5.jpg`) as `BagMesh`:
+    - Sleek, tapered arch-top dome daypack silhouette (#D24442) hugging the back cleanly
+    - Anti-aliased Linear-filtered 1024x1024 white "NIKE" + Swoosh logo on the upper arch panel
+    - Clean side-panel zipper & side-pocket seam texture (zero outline speckle artifacts)
+    - Slim, snug lower front box pocket (2.4 cm depth) with flush zipper flap hood & subtle pull tab
+    - Smooth top webbing haul loop handle & smooth padded shoulder straps.
+    """
+    mat_red = make_toon_source_material("MatBackpackRed", 0xD24442)
+    mat_trim = make_toon_source_material("MatBackpackTrimRed", 0xBC3838)
+    mat_logo = create_nike_backpack_logo_material()
+    mat_side = create_nike_backpack_side_material()
     parts = []
 
+    # 1. Sleek Tapered Arch-Top Main Backpack Body (z = 0.858 to 1.254, snug depth 13.6 cm tapering to top)
     pack_stations = [
-        (0.858, 0.115, -0.102, -0.210),
-        (0.882, 0.136, -0.100, -0.242),
-        (0.920, 0.146, -0.098, -0.276),
-        (1.000, 0.148, -0.096, -0.278),
-        (1.095, 0.146, -0.096, -0.275),
-        (1.180, 0.140, -0.096, -0.268),
-        (1.232, 0.126, -0.094, -0.244),
-        (1.255, 0.098, -0.092, -0.192),
+        (0.858, 0.120, -0.096, -0.205),  # soft chamfered bottom base
+        (0.876, 0.138, -0.090, -0.228),  # lower full width & snug depth (13.8 cm)
+        (0.985, 0.140, -0.088, -0.226),  # mid body (side pocket seam height)
+        (1.072, 0.138, -0.088, -0.221),  # start of dome arch (slight sleek taper)
+        (1.132, 0.130, -0.088, -0.214),  # mid-lower dome arch (NIKE logo center)
+        (1.182, 0.116, -0.088, -0.203),  # upper dome arch
+        (1.220, 0.092, -0.088, -0.187),  # dome shoulder
+        (1.244, 0.058, -0.088, -0.166),  # dome crown
+        (1.254, 0.026, -0.090, -0.142),  # top arch apex
     ]
-    n_pseg = 28
+    n_pseg = 32
     pack_rings = []
     for z, hw, yf, yb in pack_stations:
         ring = []
@@ -43,37 +107,118 @@ def build_bag_red_backpack():
         for s in range(n_pseg):
             ang = (2.0 * math.pi * s) / n_pseg
             ca, sa = math.cos(ang), math.sin(ang)
-            sx = math.copysign(abs(ca) ** 0.58, ca) * hw
-            sy = yc + math.copysign(abs(sa) ** 0.56, sa) * hy
+            # Clean rounded sides + gently flat rear panel for crisp logo & snug front pocket
+            sx = math.copysign(abs(ca) ** 0.62, ca) * hw
+            sy = yc + math.copysign(abs(sa) ** 0.55, sa) * hy
             ring.append((sx, sy, z))
         pack_rings.append(ring)
 
+    pack_body = make_loft_from_rings(
+        "BackpackBody",
+        pack_rings,
+        mat_red,
+        cap_start=True,
+        cap_end=True,
+        smooth=True,
+    )
+    _assign_backpack_uvs(pack_body, mat_red, mat_logo, mat_side)
+    parts.append(pack_body)
+
+    # 2. Slim, Snug Lower Front Box Pocket (only ~2.4 cm projection, neat inset margins!)
+    pocket_stations = [
+        (0.874, 0.098, -0.218, -0.244),  # slightly beveled lower edge above pack bottom
+        (0.884, 0.102, -0.218, -0.248),  # slim full pocket face
+        (0.996, 0.102, -0.218, -0.246),  # gentle inward taper toward top flap
+        (1.012, 0.099, -0.218, -0.242),  # snug upper bevel into main body
+    ]
+    n_kseg = 24
+    pocket_rings = []
+    for z, hw, yf, yb in pocket_stations:
+        ring = []
+        yc = 0.5 * (yf + yb)
+        hy = 0.5 * (yf - yb)
+        for s in range(n_kseg):
+            ang = (2.0 * math.pi * s) / n_kseg
+            ca, sa = math.cos(ang), math.sin(ang)
+            sx = math.copysign(abs(ca) ** 0.42, ca) * hw
+            sy = yc + math.copysign(abs(sa) ** 0.42, sa) * hy
+            ring.append((sx, sy, z))
+        pocket_rings.append(ring)
     parts.append(
-        make_loft_from_rings("BackpackBody", pack_rings, mat_red, cap_start=True, cap_end=True)
+        make_loft_from_rings(
+            "BackpackFrontPocket",
+            pocket_rings,
+            mat_red,
+            cap_start=True,
+            cap_end=True,
+            smooth=True,
+        )
     )
 
-    y_in, y_out = -0.268, -0.282
-    logo_boxes = [
-        ("Logo_H_Top", -0.072, 0.040, y_out, y_in, 1.125, 1.160),
-        ("Logo_H_Mid", -0.038, 0.012, y_out, y_in, 1.078, 1.127),
-        ("Logo_H_Bot", -0.072, 0.014, y_out, y_in, 1.044, 1.080),
-        ("Logo_Dot", 0.026, 0.070, y_out, y_in, 1.042, 1.080),
-        ("Logo_Bar1", -0.072, 0.070, y_out, y_in, 0.986, 1.020),
-        ("Logo_Bar2", -0.072, 0.070, y_out, y_in, 0.926, 0.960),
-    ]
-    for bname, x0, x1, y0, y1, z0, z1 in logo_boxes:
-        parts.append(make_box_plate(bname, x0, x1, y0, y1, z0, z1, mat_logo))
+    # Slim flush zipper flap hood across the top of the pocket (only 2.5 mm proud, 1.8 cm tall!)
+    parts.append(
+        make_box_plate(
+            "BackpackPocketFlap",
+            -0.102,
+            0.102,
+            -0.2505,
+            -0.222,
+            0.995,
+            1.013,
+            mat_trim,
+        )
+    )
 
+    # Sleek thin vertical zipper pull tab tucked cleanly under the flap on the left
+    parts.append(
+        make_box_plate(
+            "BackpackZipperTab",
+            -0.056,
+            -0.046,
+            -0.2505,
+            -0.2455,
+            0.960,
+            0.995,
+            mat_trim,
+        )
+    )
+
+    # 3. Smooth Top Webbing Haul Loop Handle at the apex of the dome (z = 1.240..1.284)
+    handle_pts = 11
+    handle_rings = []
+    for i in range(handle_pts):
+        t = i / (handle_pts - 1)
+        ang = math.pi * (1.0 - t)
+        hx = math.cos(ang) * 0.032
+        hz = 1.240 + math.sin(ang) * 0.044
+        hy = -0.164 - math.sin(ang) * 0.010
+        h_ring = [
+            (hx - 0.0035, hy - 0.007, hz),
+            (hx + 0.0035, hy - 0.007, hz),
+            (hx + 0.0035, hy + 0.007, hz),
+            (hx - 0.0035, hy + 0.007, hz),
+        ]
+        handle_rings.append(h_ring)
+    parts.append(
+        make_loft_from_rings(
+            "BackpackHaulHandle",
+            handle_rings,
+            mat_trim,
+            cap_start=True,
+            cap_end=True,
+            smooth=True,
+        )
+    )
+
+    # 4. Smooth Tailored Padded Red Shoulder Straps (sleeker profile, sitting cleanly on shoulder)
     strap_path = [
-        (0.095, -0.130, 1.225, 0.026, 0.020),
-        (0.138, -0.098, 1.248, 0.030, 0.024),
-        (0.160, -0.035, 1.254, 0.030, 0.025),
-        (0.164, 0.032, 1.238, 0.027, 0.022),
-        (0.158, 0.088, 1.192, 0.023, 0.017),
-        (0.150, 0.102, 1.125, 0.020, 0.014),
-        (0.150, 0.068, 1.050, 0.018, 0.013),
-        (0.148, -0.012, 1.000, 0.018, 0.013),
-        (0.125, -0.120, 0.980, 0.018, 0.013),
+        (0.088, -0.116, 1.228, 0.022, 0.016),
+        (0.132, -0.088, 1.254, 0.025, 0.018),
+        (0.155, -0.030, 1.259, 0.025, 0.018),
+        (0.160, 0.032, 1.244, 0.023, 0.017),
+        (0.152, 0.086, 1.196, 0.020, 0.014),
+        (0.140, 0.094, 1.130, 0.016, 0.012),
+        (0.114, 0.048, 1.070, 0.011, 0.009),
     ]
     n_st_seg = 12
     for side in (-1.0, 1.0):
@@ -93,9 +238,21 @@ def build_bag_red_backpack():
                 mat_red,
                 cap_start=True,
                 cap_end=True,
+                smooth=True,
             )
         )
 
+    for part in parts:
+        if part.name == "BackpackStrap_L":
+            assign_part_weights(part, "backpack_strap_L")
+        elif part.name == "BackpackStrap_R":
+            assign_part_weights(part, "backpack_strap_R")
+        elif part.name == "CrossbodyStrap":
+            assign_part_weights(part, "crossbody_strap")
+        elif part.name == "CrossbodyPouch":
+            assign_part_weights(part, "crossbody_pouch")
+        else:
+            assign_part_weights(part, "backpack")
     return join_parts_into_slot_mesh(parts, "BagMesh")
 
 
@@ -200,4 +357,15 @@ def build_bag_yellow_crossbody():
     pouch.select_set(False)
     parts.append(pouch)
 
+    for part in parts:
+        if part.name == "BackpackStrap_L":
+            assign_part_weights(part, "backpack_strap_L")
+        elif part.name == "BackpackStrap_R":
+            assign_part_weights(part, "backpack_strap_R")
+        elif part.name == "CrossbodyStrap":
+            assign_part_weights(part, "crossbody_strap")
+        elif part.name == "CrossbodyPouch":
+            assign_part_weights(part, "crossbody_pouch")
+        else:
+            assign_part_weights(part, "backpack")
     return join_parts_into_slot_mesh(parts, "BagMesh")

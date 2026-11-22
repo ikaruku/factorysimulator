@@ -14,6 +14,7 @@ Modular `ShoesMesh` (Sepatu) slot builders for Male & Female Abeto characters:
 import math
 import bpy
 from mesh_utils import join_parts_into_slot_mesh, make_loft_from_rings, make_toon_source_material
+from rig_builder import assign_part_weights
 
 
 def build_shoes_high_top_sneakers():
@@ -118,6 +119,9 @@ def build_shoes_high_top_sneakers():
             bar.select_set(False)
             parts.append(bar)
 
+    for part in parts:
+        role = "shoe_L" if "_L" in part.name else "shoe_R"
+        assign_part_weights(part, role)
     return join_parts_into_slot_mesh(parts, "ShoesMesh")
 
 
@@ -235,4 +239,7 @@ def build_shoes_white_strap_sneakers():
         strap.select_set(False)
         parts.append(strap)
 
+    for part in parts:
+        role = "shoe_L" if "_L" in part.name else "shoe_R"
+        assign_part_weights(part, role)
     return join_parts_into_slot_mesh(parts, "ShoesMesh")

@@ -78,6 +78,140 @@ def _make_textured_material(name, img, closest=True):
     return mat
 
 
+def _point_in_poly(u, v, poly):
+    inside = False
+    n = len(poly)
+    j = n - 1
+    for i in range(n):
+        ui, vi = poly[i]
+        uj, vj = poly[j]
+        if (vi > v) != (vj > v) and u < (uj - ui) * (v - vi) / (vj - vi + 1e-12) + ui:
+            inside = not inside
+        j = i
+    return inside
+
+
+def _draw_polygon(pixels, w, h, poly, color):
+    us = [p[0] for p in poly]
+    vs = [p[1] for p in poly]
+    min_x = max(0, int((min(us) - 0.01) * w))
+    max_x = min(w - 1, int((max(us) + 0.01) * w))
+    min_y = max(0, int((min(vs) - 0.01) * h))
+    max_y = min(h - 1, int((max(vs) + 0.01) * h))
+    for py in range(min_y, max_y + 1):
+        v = (py + 0.5) / h
+        for px in range(min_x, max_x + 1):
+            u = (px + 0.5) / w
+            if _point_in_poly(u, v, poly):
+                idx = (py * w + px) * 4
+                pixels[idx : idx + 4] = color
+
+
+def _cubic_bezier(p0, p1, p2, p3, t):
+    mt = 1.0 - t
+    c0 = mt * mt * mt
+    c1 = 3.0 * mt * mt * t
+    c2 = 3.0 * mt * t * t
+    c3 = t * t * t
+    return (
+        c0 * p0[0] + c1 * p1[0] + c2 * p2[0] + c3 * p3[0],
+        c0 * p0[1] + c1 * p1[1] + c2 * p2[1] + c3 * p3[1],
+    )
+
+
+def create_nike_backpack_logo_material():
+    """
+    Creates a razor-sharp 1024x1024 coral-crimson (#D24442) backpack upper-panel texture
+    with the crisp white (#F2F4EE) Futura-Condensed-Italic 'NIKE' + Swoosh logo.
+    """
+    w, h = 1024, 1024
+    red_bg = _hex_to_rgba(0xD24442)
+    white_logo = _hex_to_rgba(0xF2F4EE)
+
+    img, pixels = _create_image("NikeBackpackLogoTex", w, h, red_bg)
+
+    # 1. Iconic Bold Condensed Oblique "NIKE" letters (slanted right by slant_k = 0.22)
+    slant_k = 0.22
+    v_ref = 0.42
+
+    def sl(u0, v0):
+        return (u0 + slant_k * (v0 - v_ref), v0)
+
+    letter_polys = [
+        # 'N' (left stem, diagonal, right stem)
+        [sl(0.320, 0.435), sl(0.354, 0.435), sl(0.354, 0.755), sl(0.320, 0.755)],
+        [sl(0.334, 0.755), sl(0.364, 0.755), sl(0.412, 0.435), sl(0.382, 0.435)],
+        [sl(0.384, 0.435), sl(0.418, 0.435), sl(0.418, 0.755), sl(0.384, 0.755)],
+        # 'I'
+        [sl(0.432, 0.435), sl(0.468, 0.435), sl(0.468, 0.755), sl(0.432, 0.755)],
+        # 'K' (left stem, upper arm, lower leg)
+        [sl(0.482, 0.435), sl(0.518, 0.435), sl(0.518, 0.755), sl(0.482, 0.755)],
+        [sl(0.506, 0.565), sl(0.548, 0.755), sl(0.586, 0.755), sl(0.530, 0.540)],
+        [sl(0.518, 0.615), sl(0.546, 0.615), sl(0.586, 0.435), sl(0.546, 0.435)],
+        # 'E' (left stem, top bar, mid bar, bottom bar)
+        [sl(0.594, 0.435), sl(0.630, 0.435), sl(0.630, 0.755), sl(0.594, 0.755)],
+        [sl(0.594, 0.688), sl(0.678, 0.688), sl(0.678, 0.755), sl(0.594, 0.755)],
+        [sl(0.594, 0.562), sl(0.668, 0.562), sl(0.668, 0.626), sl(0.594, 0.626)],
+        [sl(0.594, 0.435), sl(0.674, 0.435), sl(0.674, 0.500), sl(0.594, 0.500)],
+    ]
+    for lpoly in letter_polys:
+        _draw_polygon(pixels, w, h, lpoly, white_logo)
+
+    # 2. Iconic Curved Nike Swoosh sweeping underneath and through the lower right of "NIKE"
+    p_hook = (0.334, 0.545)
+    p_tip = (0.785, 0.535)
+
+    # Outer (lower) boundary: hook -> left belly -> bottom belly -> sharp right wingtip
+    outer_seg1 = [
+        _cubic_bezier(p_hook, (0.242, 0.375), (0.240, 0.195), (0.345, 0.195), i / 40.0)
+        for i in range(41)
+    ]
+    outer_seg2 = [
+        _cubic_bezier((0.345, 0.195), (0.445, 0.195), (0.615, 0.375), p_tip, i / 50.0)
+        for i in range(1, 51)
+    ]
+    # Inner (upper) boundary: sharp right wingtip -> inner trough -> hook
+    inner_seg1 = [
+        _cubic_bezier(p_tip, (0.600, 0.415), (0.445, 0.295), (0.365, 0.312), i / 50.0)
+        for i in range(1, 51)
+    ]
+    inner_seg2 = [
+        _cubic_bezier((0.365, 0.312), (0.305, 0.325), (0.296, 0.425), p_hook, i / 35.0)
+        for i in range(1, 35)
+    ]
+
+    swoosh_poly = outer_seg1 + outer_seg2 + inner_seg1 + inner_seg2
+    _draw_polygon(pixels, w, h, swoosh_poly, white_logo)
+
+    img.pixels.foreach_set(pixels)
+    img.pack()
+    # Linear filtering + mipmaps keep oblique 3/4 views of italic "NIKE" & Swoosh razor-smooth
+    return _make_textured_material("MatNikeBackpackLogo", img, closest=False)
+
+
+def create_nike_backpack_side_material():
+    """
+    Creates a clean 512x512 coral-red (#D24442) side-panel texture with subtle darker crimson
+    (#B23232) main zipper seam and side-pocket horizontal seam lines — zero intersecting
+    geometry so the Abeto outline shader produces zero black speckles on the backpack sides.
+    """
+    w, h = 512, 512
+    red_bg = _hex_to_rgba(0xD24442)
+    seam_col = _hex_to_rgba(0xAE3030)
+
+    img, pixels = _create_image("NikeBackpackSideTex", w, h, red_bg)
+
+    # Vertical main zipper track seam along u ~ 0.58 from mid-side (v=0.33) curving over upper arch
+    _draw_capsule(pixels, w, h, 0.58, 0.34, 0.58, 0.72, 0.011, seam_col)
+    _draw_capsule(pixels, w, h, 0.58, 0.72, 0.52, 0.88, 0.011, seam_col)
+    # Horizontal side-pocket top hem seam from back (u=0.04) forward to zipper track (u=0.58)
+    _draw_capsule(pixels, w, h, 0.04, 0.34, 0.58, 0.34, 0.009, seam_col)
+
+    img.pixels.foreach_set(pixels)
+    img.pack()
+    return _make_textured_material("MatNikeBackpackSide", img, closest=False)
+
+
 def create_face_material(gender="male"):
     """Creates a razor-sharp 1024x1024 Abeto face texture for 'male' or 'female'."""
     w, h = 1024, 1024

@@ -16,6 +16,7 @@ import math
 import bpy
 from mathutils import Vector
 from mesh_utils import join_parts_into_slot_mesh, make_loft_from_rings, make_toon_source_material
+from rig_builder import assign_part_weights
 
 
 def build_hair_shaggy_male():
@@ -94,6 +95,7 @@ def build_hair_shaggy_male():
     bpy.ops.object.modifier_apply(modifier="Solidify")
     bpy.ops.object.shade_smooth()
     hair_obj.select_set(False)
+    assign_part_weights(hair_obj, "hair")
 
     return join_parts_into_slot_mesh([hair_obj], "HairMesh")
 
@@ -224,4 +226,6 @@ def build_hair_twin_buns_female():
         tie.select_set(False)
         parts.append(tie)
 
+    for part in parts:
+        assign_part_weights(part, "hair")
     return join_parts_into_slot_mesh(parts, "HairMesh")

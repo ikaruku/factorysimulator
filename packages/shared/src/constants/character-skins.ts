@@ -90,7 +90,7 @@ export const SHOES_SKIN_OPTIONS: readonly OutfitSkinOption<ShoesSkinId>[] = [
 export const BAG_SKIN_OPTIONS: readonly OutfitSkinOption<BagSkinId>[] = [
   {
     id: "red-backpack",
-    label: "Red Hi Backpack",
+    label: "Nike Red Backpack",
     slot: "bag",
     sourceGender: "male",
   },
